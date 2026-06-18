@@ -1,0 +1,74 @@
+name: seed_color
+description: "🌱 SeedColor by DevSeed Studio — Aplikasi koreksi warna dan color grading profesional."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_bloc: ^9.1.0
+  replay_bloc: ^0.3.0
+  equatable: ^2.0.7
+
+  # Routing
+  go_router: ^14.8.1
+
+  # Dependency Injection
+  get_it: ^8.0.3
+  injectable: ^2.5.0
+
+  # Database
+  drift: ^2.24.0
+  sqlite3_flutter_libs: ^0.5.31
+
+  # Storage & File
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # UI
+  google_fonts: ^6.2.1
+  flutter_screenutil: ^5.9.3
+  cupertino_icons: ^1.0.8
+
+  # Image
+  image_picker: ^1.1.2
+  image: ^4.5.3
+
+  # Share
+  share_plus: ^10.1.4
+
+  # Permissions
+  permission_handler: ^11.4.0
+
+  # Utils
+  uuid: ^4.5.1
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.14
+  injectable_generator: ^2.7.0
+  drift_dev: ^2.24.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    - assets/presets/
+
+  # Fragment Shaders for real-time image processing
+  shaders:
+    - lib/shaders/adjustments.frag
+    - lib/shaders/color_adjustments.frag
+    - lib/shaders/curves.frag
+    - lib/shaders/effects.frag
+    - lib/shaders/color_grading.frag
