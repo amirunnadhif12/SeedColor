@@ -363,12 +363,12 @@ flutter analyze    # Harus 0 issues
 #### 🔹 Step 2: Core Widgets & Utilities (Minggu 1-2)
 
 **Apa yang dikerjakan:**
-- [ ] Buat `SeedSlider` — custom slider mirip Lightroom (centered, gradient track, value label)
-- [ ] Buat `SeedButton` — icon button dengan animasi
-- [ ] Buat `SeedBottomSheet` — pattern bottom sheet
-- [ ] Buat math utilities (spline interpolation untuk Curves)
-- [ ] Buat debounce utilities (agar slider smooth)
-- [ ] Buat color extension methods (RGB ↔ HSL konversi)
+- [x] Buat `SeedSlider` — custom slider mirip Lightroom (centered, gradient track, value label)
+- [x] Buat `SeedButton` — icon button dengan animasi
+- [x] Buat `SeedBottomSheet` — pattern bottom sheet
+- [x] Buat math utilities (spline interpolation untuk Curves)
+- [x] Buat debounce utilities (agar slider smooth)
+- [x] Buat color extension methods (RGB ↔ HSL konversi)
 
 **File yang dibuat:**
 ```

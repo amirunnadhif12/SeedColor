@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../../../core/widgets/seed_slider.dart';
 
 /// 🌱 SeedColor — Halaman Editor
 ///
@@ -247,7 +248,7 @@ class _EditorPageState extends State<EditorPage>
     );
   }
 
-  /// Lightroom-style adjustment sliders
+  /// Lightroom-style adjustment sliders — menggunakan SeedSlider dari core/widgets
   Widget _buildAdjustmentSliders() {
     final values = _currentValues;
 
@@ -257,82 +258,18 @@ class _EditorPageState extends State<EditorPage>
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         physics: const BouncingScrollPhysics(),
         children: values.entries.map((entry) {
-          return _buildSliderRow(
+          return SeedSlider(
             label: entry.key,
             value: entry.value,
             min: entry.key == 'Exposure' ? -5.0 : -100.0,
             max: entry.key == 'Exposure' ? 5.0 : 100.0,
             onChanged: (val) {
-              HapticFeedback.selectionClick();
               setState(() {
                 _currentValues[entry.key] = val;
               });
             },
           );
         }).toList(),
-      ),
-    );
-  }
-
-  /// Single slider row: Label — Slider — Value
-  Widget _buildSliderRow({
-    required String label,
-    required double value,
-    required double min,
-    required double max,
-    required ValueChanged<double> onChanged,
-  }) {
-    // Format value display
-    String displayValue;
-    if (label == 'Exposure') {
-      displayValue =
-          '${value >= 0 ? "+" : ""}${value.toStringAsFixed(2).replaceAll(".", ",")}';
-    } else {
-      final intVal = value.round();
-      displayValue = '${intVal >= 0 ? "+" : ""}$intVal';
-    }
-
-
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 14),
-      child: Row(
-        children: [
-          // Label
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
-            ),
-          ),
-
-          // Custom centered slider
-          Expanded(
-            child: _CenteredSlider(
-              value: value,
-              min: min,
-              max: max,
-              onChanged: onChanged,
-            ),
-          ),
-
-          // Value
-          SizedBox(
-            width: 46,
-            child: Text(
-              displayValue,
-              textAlign: TextAlign.right,
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -395,104 +332,6 @@ class _EditorPageState extends State<EditorPage>
           );
         }),
       ),
-    );
-  }
-}
-
-/// Custom centered slider widget yang menunjukkan posisi dari center (zero)
-class _CenteredSlider extends StatelessWidget {
-  final double value;
-  final double min;
-  final double max;
-  final ValueChanged<double> onChanged;
-
-  const _CenteredSlider({
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final centerFraction = (0 - min) / (max - min);
-        final valueFraction = (value - min) / (max - min);
-        final centerX = width * centerFraction;
-        final valueX = width * valueFraction;
-
-        return SizedBox(
-          height: 36,
-          child: Stack(
-            alignment: Alignment.centerLeft,
-            children: [
-              // Background track
-              Positioned(
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 2,
-                  decoration: BoxDecoration(
-                    color: AppColors.sliderTrack,
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                ),
-              ),
-
-              // Active portion (from center to thumb)
-              Positioned(
-                left: value >= 0 ? centerX : valueX,
-                width: (valueX - centerX).abs(),
-                child: Container(
-                  height: 2,
-                  decoration: BoxDecoration(
-                    color: AppColors.textPrimary.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                ),
-              ),
-
-              // Center dot indicator
-              Positioned(
-                left: centerX - 2,
-                child: Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textTertiary,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-
-              // Invisible slider on top for gesture handling
-              Positioned.fill(
-                child: SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 0,
-                    activeTrackColor: Colors.transparent,
-                    inactiveTrackColor: Colors.transparent,
-                    thumbColor: AppColors.textPrimary,
-                    thumbShape:
-                        const RoundSliderThumbShape(enabledThumbRadius: 6),
-                    overlayColor: AppColors.primary.withValues(alpha: 0.08),
-                    overlayShape:
-                        const RoundSliderOverlayShape(overlayRadius: 14),
-                  ),
-                  child: Slider(
-                    value: value,
-                    min: min,
-                    max: max,
-                    onChanged: onChanged,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
