@@ -484,10 +484,10 @@ flutter test test/features/editor/domain/
 #### 🔹 Step 5: Editor — BLoC + State Management (Minggu 4)
 
 **Apa yang dikerjakan:**
-- [ ] Buat `EditorBloc` extends `ReplayBloc` (undo/redo bawaan!)
-- [ ] Buat semua Events: `UpdateLight`, `UpdateColor`, `UpdateHSL`, `UpdateCurves`, `UpdateEffects`, `UpdateColorGrading`, `ResetAll`, `Export`
-- [ ] Buat `EditorState` dengan semua parameters
-- [ ] Implementasi debounced state emission (slider jangan emit tiap pixel)
+- [x] Buat `EditorBloc` extends `ReplayBloc` (undo/redo bawaan!)
+- [x] Buat semua Events: `UpdateLight`, `UpdateColor`, `UpdateHSL`, `UpdateCurves`, `UpdateEffects`, `UpdateColorGrading`, `ResetAll`, `Export`
+- [x] Buat `EditorState` dengan semua parameters
+- [x] Implementasi debounced state emission (slider jangan emit tiap pixel)
 
 **File yang dibuat:**
 ```
