@@ -5,13 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
-import '../../../../core/widgets/seed_slider.dart';
+import '../widgets/adjustment_panel.dart';
+import '../widgets/image_canvas.dart';
+import '../widgets/tool_selector.dart';
 
 /// 🌱 SeedColor — Halaman Editor
 ///
-/// Halaman utama untuk mengedit foto dengan akselerasi GPU (Shader).
-/// Layout: Full-screen image preview + Bottom tool panel
-/// Lightroom-style sliders (label + slider + value)
+/// Halaman utama pengeditan foto dengan tata letak visual Lightroom:
+/// Pratinjau atas (70% layar, diakselerasi GPU) + Bilah Slider / Alat bawah (30% layar).
 class EditorPage extends StatefulWidget {
   final String photoId;
 
@@ -24,20 +25,20 @@ class EditorPage extends StatefulWidget {
 class _EditorPageState extends State<EditorPage>
     with SingleTickerProviderStateMixin {
   int _selectedToolIndex = 0;
-  
+
   // Resources for shader preview
   ui.Image? _testImage;
   ui.Image? _lutImage;
   ui.FragmentShader? _shader;
   bool _isLoading = true;
 
-  final List<_ToolItem> _tools = [
-    _ToolItem(Icons.wb_sunny_rounded, 'Light', AppColors.toolLight),
-    _ToolItem(Icons.palette_rounded, 'Color', AppColors.toolColor),
-    _ToolItem(Icons.auto_awesome_rounded, 'Effects', AppColors.toolEffects),
-    _ToolItem(Icons.details_rounded, 'Detail', AppColors.toolDetail),
-    _ToolItem(Icons.crop_rounded, 'Geometry', AppColors.toolGeometry),
-    _ToolItem(Icons.layers_rounded, 'Masking', AppColors.toolMasking),
+  final List<ToolItem> _tools = [
+    const ToolItem(Icons.wb_sunny_rounded, 'Light', AppColors.toolLight),
+    const ToolItem(Icons.palette_rounded, 'Color', AppColors.toolColor),
+    const ToolItem(Icons.auto_awesome_rounded, 'Effects', AppColors.toolEffects),
+    const ToolItem(Icons.details_rounded, 'Detail', AppColors.toolDetail),
+    const ToolItem(Icons.crop_rounded, 'Geometry', AppColors.toolGeometry),
+    const ToolItem(Icons.layers_rounded, 'Masking', AppColors.toolMasking),
   ];
 
   // ─── Light Panel Sliders ─────────────────────────────
@@ -182,7 +183,6 @@ class _EditorPageState extends State<EditorPage>
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
-          // Back button
           IconButton(
             icon: const Icon(Icons.arrow_back_rounded, size: 22),
             color: AppColors.textPrimary,
@@ -190,24 +190,18 @@ class _EditorPageState extends State<EditorPage>
             tooltip: 'Kembali',
           ),
           const Spacer(),
-
-          // Undo
           IconButton(
             icon: const Icon(Icons.undo_rounded, size: 20),
             color: AppColors.textTertiary,
             onPressed: () {},
             tooltip: 'Urungkan',
           ),
-
-          // Redo
           IconButton(
             icon: const Icon(Icons.redo_rounded, size: 20),
             color: AppColors.textTertiary,
             onPressed: () {},
             tooltip: 'Ulangi',
           ),
-
-          // Share / Export
           IconButton(
             icon: const Icon(Icons.ios_share_rounded, size: 20),
             color: AppColors.textPrimary,
@@ -219,7 +213,7 @@ class _EditorPageState extends State<EditorPage>
     );
   }
 
-  /// Full-bleed image preview dengan rendering shader real-time
+  /// Pratinjau gambar modular yang terhubung ke ImageCanvas (GPU acceleration)
   Widget _buildImagePreview() {
     if (_isLoading) {
       return const Center(
@@ -249,46 +243,25 @@ class _EditorPageState extends State<EditorPage>
       );
     }
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundPanel,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: InteractiveViewer(
-          maxScale: 4.0,
-          child: Center(
-            child: AspectRatio(
-              aspectRatio: _testImage!.width / _testImage!.height,
-              child: CustomPaint(
-                painter: ShaderPainter(
-                  shader: _shader!,
-                  image: _testImage!,
-                  lutImage: _lutImage!,
-                  exposure: _lightValues['Exposure'] ?? 0.0,
-                  contrast: _lightValues['Contrast'] ?? 0.0,
-                  highlights: _lightValues['Highlights'] ?? 0.0,
-                  shadows: _lightValues['Shadows'] ?? 0.0,
-                  whites: _lightValues['Whites'] ?? 0.0,
-                  blacks: _lightValues['Blacks'] ?? 0.0,
-                  temperature: _colorValues['Temperature'] ?? 0.0,
-                  tint: _colorValues['Tint'] ?? 0.0,
-                  vibrance: _colorValues['Vibrance'] ?? 0.0,
-                  saturation: _colorValues['Saturation'] ?? 0.0,
-                  textureAdjust: _effectsValues['Texture'] ?? 0.0,
-                  clarity: _effectsValues['Clarity'] ?? 0.0,
-                  dehaze: _effectsValues['Dehaze'] ?? 0.0,
-                  vignette: _effectsValues['Vignette'] ?? 0.0,
-                  grain: _effectsValues['Grain'] ?? 0.0,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return ImageCanvas(
+      image: _testImage!,
+      lutImage: _lutImage!,
+      shader: _shader!,
+      exposure: _lightValues['Exposure'] ?? 0.0,
+      contrast: _lightValues['Contrast'] ?? 0.0,
+      highlights: _lightValues['Highlights'] ?? 0.0,
+      shadows: _lightValues['Shadows'] ?? 0.0,
+      whites: _lightValues['Whites'] ?? 0.0,
+      blacks: _lightValues['Blacks'] ?? 0.0,
+      temperature: _colorValues['Temperature'] ?? 0.0,
+      tint: _colorValues['Tint'] ?? 0.0,
+      vibrance: _colorValues['Vibrance'] ?? 0.0,
+      saturation: _colorValues['Saturation'] ?? 0.0,
+      textureAdjust: _effectsValues['Texture'] ?? 0.0,
+      clarity: _effectsValues['Clarity'] ?? 0.0,
+      dehaze: _effectsValues['Dehaze'] ?? 0.0,
+      vignette: _effectsValues['Vignette'] ?? 0.0,
+      grain: _effectsValues['Grain'] ?? 0.0,
     );
   }
 
@@ -333,225 +306,28 @@ class _EditorPageState extends State<EditorPage>
     );
   }
 
-  /// Lightroom-style adjustment sliders
+  /// Penampung slider penyesuaian modular
   Widget _buildAdjustmentSliders() {
-    final values = _currentValues;
-
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 220),
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        physics: const BouncingScrollPhysics(),
-        children: values.entries.map((entry) {
-          return SeedSlider(
-            label: entry.key,
-            value: entry.value,
-            min: entry.key == 'Exposure' ? -5.0 : -100.0,
-            max: entry.key == 'Exposure' ? 5.0 : 100.0,
-            onChanged: (val) {
-              setState(() {
-                _currentValues[entry.key] = val;
-              });
-            },
-          );
-        }).toList(),
-      ),
+    return AdjustmentPanel(
+      values: _currentValues,
+      onChanged: (key, val) {
+        setState(() {
+          _currentValues[key] = val;
+        });
+      },
     );
   }
 
-  /// Bottom tool selector bar
+  /// Penyeleksi alat modular
   Widget _buildToolSelector() {
-    return Container(
-      height: 60,
-      decoration: const BoxDecoration(
-        color: AppColors.backgroundPanel,
-        border: Border(
-          top: BorderSide(color: AppColors.border, width: 0.5),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(_tools.length, (index) {
-          final tool = _tools[index];
-          final isSelected = index == _selectedToolIndex;
-
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              setState(() => _selectedToolIndex = index);
-            },
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 56,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      tool.icon,
-                      size: 20,
-                      color:
-                          isSelected ? AppColors.primary : AppColors.textTertiary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    tool.label,
-                    style: AppTypography.toolLabel.copyWith(
-                      color:
-                          isSelected ? AppColors.primary : AppColors.textTertiary,
-                      fontSize: 9,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
+    return ToolSelector(
+      selectedIndex: _selectedToolIndex,
+      tools: _tools,
+      onToolSelected: (index) {
+        setState(() {
+          _selectedToolIndex = index;
+        });
+      },
     );
-  }
-}
-
-/// Model data untuk tool item
-class _ToolItem {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _ToolItem(this.icon, this.label, this.color);
-}
-
-/// CustomPainter untuk menggambar gambar uji menggunakan FragmentShader
-class ShaderPainter extends CustomPainter {
-  final ui.FragmentShader shader;
-  final ui.Image image;
-  final ui.Image lutImage;
-
-  final double exposure;
-  final double contrast;
-  final double highlights;
-  final double shadows;
-  final double whites;
-  final double blacks;
-
-  final double temperature;
-  final double tint;
-  final double vibrance;
-  final double saturation;
-
-  final double textureAdjust;
-  final double clarity;
-  final double dehaze;
-  final double vignette;
-  final double grain;
-
-  ShaderPainter({
-    required this.shader,
-    required this.image,
-    required this.lutImage,
-    required this.exposure,
-    required this.contrast,
-    required this.highlights,
-    required this.shadows,
-    required this.whites,
-    required this.blacks,
-    required this.temperature,
-    required this.tint,
-    required this.vibrance,
-    required this.saturation,
-    required this.textureAdjust,
-    required this.clarity,
-    required this.dehaze,
-    required this.vignette,
-    required this.grain,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // 0. Set canvas size
-    shader.setFloat(0, size.width);
-    shader.setFloat(1, size.height);
-
-    // 1. Light Adjustments (Exposure, Contrast, Highlights, Shadows, Whites, Blacks)
-    shader.setFloat(2, exposure);
-    shader.setFloat(3, contrast);
-    shader.setFloat(4, highlights);
-    shader.setFloat(5, shadows);
-    shader.setFloat(6, whites);
-    shader.setFloat(7, blacks);
-
-    // 2. Color Adjustments (Temperature, Tint, Vibrance, Saturation)
-    shader.setFloat(8, temperature);
-    shader.setFloat(9, tint);
-    shader.setFloat(10, vibrance);
-    shader.setFloat(11, saturation);
-
-    // HSL (24 floats, indexes 12 to 35) -> Pass 0.0
-    for (int i = 12; i < 36; i++) {
-      shader.setFloat(i, 0.0);
-    }
-
-    // 3. Effects (Texture, Clarity, Dehaze, Vignette, Grain)
-    shader.setFloat(36, textureAdjust);
-    shader.setFloat(37, clarity);
-    shader.setFloat(38, dehaze);
-    shader.setFloat(39, vignette);
-    shader.setFloat(40, grain);
-
-    // 4. Color Grading (ShadowsColor, MidtonesColor, HighlightsColor, Blending, Balance)
-    // Shadows RGB tint (41, 42, 43)
-    shader.setFloat(41, 0.0);
-    shader.setFloat(42, 0.0);
-    shader.setFloat(43, 0.0);
-    // Midtones RGB tint (44, 45, 46)
-    shader.setFloat(44, 0.0);
-    shader.setFloat(45, 0.0);
-    shader.setFloat(46, 0.0);
-    // Highlights RGB tint (47, 48, 49)
-    shader.setFloat(47, 0.0);
-    shader.setFloat(48, 0.0);
-    shader.setFloat(49, 0.0);
-    // Blending (50)
-    shader.setFloat(50, 0.5);
-    // Balance (51)
-    shader.setFloat(51, 0.0);
-
-    // Bind Samplers
-    shader.setImageSampler(0, image);
-    shader.setImageSampler(1, lutImage);
-
-    // Draw rect covering the size bounds with shader paint
-    final paint = Paint()..shader = shader;
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant ShaderPainter oldDelegate) {
-    return oldDelegate.exposure != exposure ||
-        oldDelegate.contrast != contrast ||
-        oldDelegate.highlights != highlights ||
-        oldDelegate.shadows != shadows ||
-        oldDelegate.whites != whites ||
-        oldDelegate.blacks != blacks ||
-        oldDelegate.temperature != temperature ||
-        oldDelegate.tint != tint ||
-        oldDelegate.vibrance != vibrance ||
-        oldDelegate.saturation != saturation ||
-        oldDelegate.textureAdjust != textureAdjust ||
-        oldDelegate.clarity != clarity ||
-        oldDelegate.dehaze != dehaze ||
-        oldDelegate.vignette != vignette ||
-        oldDelegate.grain != grain ||
-        oldDelegate.image != image ||
-        oldDelegate.lutImage != lutImage;
   }
 }
