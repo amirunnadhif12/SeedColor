@@ -3,10 +3,9 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../widgets/preset_card.dart';
 
-/// 🌱 SeedColor — Halaman Preset Browser
+/// 🌱 SeedColor — Preset Browser Page
 ///
-/// Grid preset dengan tabs: Recommended, Premium, Yours
-/// Sesuai referensi screen 4.
+/// Refactored to align with Mockup Screen 4 layout, styling, and photorealistic presets.
 class PresetBrowserPage extends StatefulWidget {
   const PresetBrowserPage({super.key});
 
@@ -30,28 +29,23 @@ class _PresetBrowserPageState extends State<PresetBrowserPage>
     super.dispose();
   }
 
-  // ─── Preset Data ──────────────────────────────────────
+  // ─── Preset Data (Mockup Screen 4) ────────────────────
   static final List<_PresetData> _recommendedPresets = [
-    _PresetData('Blue Nature', [Color(0xFF1A3A52), Color(0xFF4A7C59)], true),
-    _PresetData('Warm Travel', [Color(0xFFCC8844), Color(0xFF885533)], true),
-    _PresetData('Dark Moody', [Color(0xFF1A1A2E), Color(0xFF16213E)], false),
-    _PresetData('Street Vibe', [Color(0xFF2D2D3A), Color(0xFF4A4A5A)], false),
-    _PresetData('Film Classic', [Color(0xFF5C4033), Color(0xFF8B7355)], false),
-    _PresetData('Matte Soft', [Color(0xFF7A6B5D), Color(0xFFA89B8C)], false),
-    _PresetData('Sunset Glow', [Color(0xFFCC6633), Color(0xFFFF8844)], false),
-    _PresetData(
-        'Black & White', [Color(0xFF2A2A2A), Color(0xFF5A5A5A)], false),
+    _PresetData('Blue Nature', 'assets/images/album_nature.png', true),
+    _PresetData('Warm Travel', 'assets/images/album_travel.png', true),
+    _PresetData('Dark Moody', 'assets/images/album_city.png', false),
+    _PresetData('Street Vibe', 'assets/images/album_city.png', false),
+    _PresetData('Film Classic', 'assets/images/mountain_lake.png', false),
+    _PresetData('Matte Soft', 'assets/images/album_portrait.png', false),
+    _PresetData('Sunset Glow', 'assets/images/album_travel.png', false),
+    _PresetData('Black & White', 'assets/images/album_city.png', false),
   ];
 
   static final List<_PresetData> _premiumPresets = [
-    _PresetData(
-        'Cinema Gold', [Color(0xFF4A3728), Color(0xFFB8860B)], false),
-    _PresetData(
-        'Teal Orange', [Color(0xFF006D6F), Color(0xFFFF6B35)], false),
-    _PresetData(
-        'Portra 400', [Color(0xFF8B7355), Color(0xFFD4C5B2)], false),
-    _PresetData(
-        'Velvia 50', [Color(0xFF2E4600), Color(0xFF1E90FF)], false),
+    _PresetData('Cinema Gold', 'assets/images/album_travel.png', false),
+    _PresetData('Teal Orange', 'assets/images/mountain_lake.png', false),
+    _PresetData('Portra 400', 'assets/images/album_portrait.png', false),
+    _PresetData('Velvia 50', 'assets/images/album_nature.png', false),
   ];
 
   @override
@@ -71,6 +65,7 @@ class _PresetBrowserPageState extends State<PresetBrowserPage>
             Expanded(
               child: TabBarView(
                 controller: _tabController,
+                physics: const BouncingScrollPhysics(),
                 children: [
                   _buildPresetGrid(_recommendedPresets),
                   _buildPresetGrid(_premiumPresets),
@@ -84,7 +79,7 @@ class _PresetBrowserPageState extends State<PresetBrowserPage>
     );
   }
 
-  /// Header: Back + Title + Add + More
+  /// Header matching Mockup Screen 4: Back + Title + Plus + More
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
@@ -100,6 +95,7 @@ class _PresetBrowserPageState extends State<PresetBrowserPage>
             'Presets',
             style: AppTypography.heading3.copyWith(
               color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const Spacer(),
@@ -107,13 +103,13 @@ class _PresetBrowserPageState extends State<PresetBrowserPage>
             icon: const Icon(Icons.add_rounded, size: 24),
             color: AppColors.textPrimary,
             onPressed: () {},
-            tooltip: 'Tambah Preset',
+            tooltip: 'Add Preset',
           ),
           IconButton(
             icon: const Icon(Icons.more_horiz_rounded, size: 24),
             color: AppColors.textPrimary,
             onPressed: () {},
-            tooltip: 'Lainnya',
+            tooltip: 'More options',
           ),
         ],
       ),
@@ -128,8 +124,8 @@ class _PresetBrowserPageState extends State<PresetBrowserPage>
         controller: _tabController,
         labelColor: AppColors.textPrimary,
         unselectedLabelColor: AppColors.textTertiary,
-        labelStyle: AppTypography.labelLarge.copyWith(fontSize: 13),
-        unselectedLabelStyle: AppTypography.labelMedium.copyWith(fontSize: 13),
+        labelStyle: AppTypography.labelLarge.copyWith(fontSize: 13, fontWeight: FontWeight.w700),
+        unselectedLabelStyle: AppTypography.labelMedium.copyWith(fontSize: 13, fontWeight: FontWeight.w600),
         indicatorColor: AppColors.primary,
         indicatorWeight: 2,
         indicatorSize: TabBarIndicatorSize.label,
@@ -160,12 +156,17 @@ class _PresetBrowserPageState extends State<PresetBrowserPage>
         final preset = presets[index];
         return PresetCard(
           name: preset.name,
-          gradientColors: preset.colors,
+          imagePath: preset.imagePath,
           isBookmarked: preset.isBookmarked,
           onTap: () {},
           onBookmarkToggle: () {
             setState(() {
-              // Toggle bookmark in real app
+              // Toggle bookmark logic
+              presets[index] = _PresetData(
+                preset.name,
+                preset.imagePath,
+                !preset.isBookmarked,
+              );
             });
           },
         );
@@ -194,16 +195,18 @@ class _PresetBrowserPageState extends State<PresetBrowserPage>
           ),
           const SizedBox(height: 16),
           Text(
-            'Belum Ada Preset',
+            'No Presets Yet',
             style: AppTypography.heading4.copyWith(
               color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Buat preset kustom dari editan kamu',
+            'Create custom presets from your edits',
             style: AppTypography.bodySmall.copyWith(
               color: AppColors.textTertiary,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -214,8 +217,8 @@ class _PresetBrowserPageState extends State<PresetBrowserPage>
 
 class _PresetData {
   final String name;
-  final List<Color> colors;
+  final String imagePath;
   final bool isBookmarked;
 
-  const _PresetData(this.name, this.colors, this.isBookmarked);
+  _PresetData(this.name, this.imagePath, this.isBookmarked);
 }

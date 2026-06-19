@@ -69,7 +69,7 @@ class AppRoutes {
                 path: edit,
                 name: 'edit',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: EditorPage(photoId: 'sample'),
+                  child: EditorScreen(photoId: 'sample'),
                 ),
               ),
             ],
@@ -100,7 +100,7 @@ class AppRoutes {
           final photoId = state.pathParameters['photoId'] ?? '';
           return CustomTransitionPage(
             key: state.pageKey,
-            child: EditorPage(photoId: photoId),
+            child: EditorScreen(photoId: photoId),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
               return SlideTransition(

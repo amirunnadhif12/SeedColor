@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 
-/// 🌱 SeedColor — Halaman Library (Beranda)
+/// 🌱 SeedColor — Library Page
 ///
-/// Menampilkan stats, album, dan navigasi ke foto.
-/// Design: Dark mode premium sesuai referensi.
+/// Revamped dashboard matching Screen 1 of the premium mockup.
 class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});
 
@@ -15,6 +14,7 @@ class LibraryPage extends StatelessWidget {
       backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
             // ─── Header ──────────────────────────────────
             SliverToBoxAdapter(child: _buildHeader()),
@@ -22,19 +22,19 @@ class LibraryPage extends StatelessWidget {
             // ─── Title ───────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Text(
                   'Library',
                   style: AppTypography.heading1.copyWith(
                     color: AppColors.textPrimary,
                     fontSize: 32,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
             ),
 
-            // ─── Stats Cards ─────────────────────────────
+            // ─── Stats Cards Grid ────────────────────────
             SliverToBoxAdapter(child: _buildStatsCards()),
 
             // ─── Albums Header ───────────────────────────
@@ -44,28 +44,28 @@ class LibraryPage extends StatelessWidget {
             SliverList(
               delegate: SliverChildListDelegate([
                 _buildAlbumItem(
+                  context: context,
                   name: 'Nature',
                   count: 128,
-                  gradient: const [Color(0xFF1B5E20), Color(0xFF4CAF50)],
-                  icon: Icons.landscape_rounded,
+                  imagePath: 'assets/images/album_nature.png',
                 ),
                 _buildAlbumItem(
+                  context: context,
                   name: 'City',
                   count: 97,
-                  gradient: const [Color(0xFF1A237E), Color(0xFF5C6BC0)],
-                  icon: Icons.location_city_rounded,
+                  imagePath: 'assets/images/album_city.png',
                 ),
                 _buildAlbumItem(
+                  context: context,
                   name: 'Portrait',
                   count: 156,
-                  gradient: const [Color(0xFF4A148C), Color(0xFFAB47BC)],
-                  icon: Icons.face_rounded,
+                  imagePath: 'assets/images/album_portrait.png',
                 ),
                 _buildAlbumItem(
+                  context: context,
                   name: 'Travel',
                   count: 75,
-                  gradient: const [Color(0xFFE65100), Color(0xFFFF9800)],
-                  icon: Icons.flight_rounded,
+                  imagePath: 'assets/images/album_travel.png',
                 ),
                 const SizedBox(height: 100), // Spacing for bottom nav
               ]),
@@ -76,57 +76,86 @@ class LibraryPage extends StatelessWidget {
     );
   }
 
-  /// Header dengan logo SeedColor + settings icon
+  /// Header matching logo and subtext of mockup
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+      padding: const EdgeInsets.fromLTRB(20, 20, 16, 8),
       child: Row(
         children: [
-          // Logo SeedColor
+          // Logo SeedColor Tile
           Container(
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0A84FF), Color(0xFF0066CC)],
-              ),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFF141522),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
             ),
-            child: const Center(
-              child: Text(
-                'C',
-                style: TextStyle(
+            child: Center(
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0A84FF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.spa_rounded,
                   color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  fontStyle: FontStyle.italic,
+                  size: 16,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          Text(
-            'SeedColor',
-            style: AppTypography.heading3.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
-            ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Seed',
+                    style: AppTypography.heading3.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  Text(
+                    'Color',
+                    style: AppTypography.heading3.copyWith(
+                      color: const Color(0xFF0A84FF),
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 1),
+              Text(
+                'EDIT YOUR WORLD',
+                style: AppTypography.bodySmall.copyWith(
+                  color: Colors.white38,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2.0,
+                ),
+              ),
+            ],
           ),
           const Spacer(),
           IconButton(
             icon: const Icon(Icons.settings_outlined, size: 24),
             color: AppColors.textSecondary,
             onPressed: () {},
-            tooltip: 'Pengaturan',
+            tooltip: 'Settings',
           ),
         ],
       ),
     );
   }
 
-  /// 2x2 Stats cards grid
+  /// 2x2 Stats cards matching mockup layout
   Widget _buildStatsCards() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -136,17 +165,17 @@ class LibraryPage extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatCard(
-                  icon: Icons.photo_rounded,
-                  label: 'Semua Foto',
-                  count: '1.253',
+                  icon: Icons.image_outlined,
+                  label: 'All Photos',
+                  count: '1,253',
                   color: AppColors.primary,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatCard(
-                  icon: Icons.favorite_rounded,
-                  label: 'Favorit',
+                  icon: Icons.favorite_border_rounded,
+                  label: 'Favorites',
                   count: '312',
                   color: const Color(0xFFFF4081),
                 ),
@@ -158,8 +187,8 @@ class LibraryPage extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatCard(
-                  icon: Icons.folder_rounded,
-                  label: 'Album',
+                  icon: Icons.folder_open_rounded,
+                  label: 'Albums',
                   count: '28',
                   color: const Color(0xFFFFB300),
                 ),
@@ -167,8 +196,8 @@ class LibraryPage extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatCard(
-                  icon: Icons.delete_rounded,
-                  label: 'Tempat Sampah',
+                  icon: Icons.delete_outline_rounded,
+                  label: 'Trash',
                   count: '18',
                   color: AppColors.textTertiary,
                 ),
@@ -191,16 +220,16 @@ class LibraryPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.backgroundPanel,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 18, color: color),
@@ -214,6 +243,7 @@ class LibraryPage extends StatelessWidget {
                   label,
                   style: AppTypography.labelSmall.copyWith(
                     color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -223,6 +253,7 @@ class LibraryPage extends StatelessWidget {
                   style: AppTypography.labelLarge.copyWith(
                     color: AppColors.textPrimary,
                     fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -240,18 +271,20 @@ class LibraryPage extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            'Album',
+            'Albums',
             style: AppTypography.heading3.copyWith(
               color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const Spacer(),
           GestureDetector(
             onTap: () {},
             child: Text(
-              'Lihat Semua',
+              'See All',
               style: AppTypography.labelMedium.copyWith(
                 color: AppColors.primary,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -260,37 +293,35 @@ class LibraryPage extends StatelessWidget {
     );
   }
 
-  /// Single album list item
+  /// Single album list item with image thumbnail matching mockup
   Widget _buildAlbumItem({
+    required BuildContext context,
     required String name,
     required int count,
-    required List<Color> gradient,
-    required IconData icon,
+    required String imagePath,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColors.backgroundPanel,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.border, width: 0.5),
         ),
         child: Row(
           children: [
-            // Album thumbnail (gradient placeholder)
+            // Album photo thumbnail
             Container(
-              width: 52,
-              height: 52,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: gradient,
-                ),
                 borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                  image: AssetImage(imagePath),
+                  fit: BoxFit.cover,
+                ),
               ),
-              child: Icon(icon, size: 24, color: Colors.white70),
             ),
             const SizedBox(width: 14),
             // Album info
@@ -302,22 +333,19 @@ class LibraryPage extends StatelessWidget {
                     name,
                     style: AppTypography.labelLarge.copyWith(
                       color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '$count foto',
+                    '$count',
                     style: AppTypography.bodySmall.copyWith(
                       color: AppColors.textTertiary,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textDisabled,
-              size: 22,
             ),
           ],
         ),

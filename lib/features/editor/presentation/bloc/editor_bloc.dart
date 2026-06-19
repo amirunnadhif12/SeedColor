@@ -1,5 +1,4 @@
 import 'package:replay_bloc/replay_bloc.dart';
-import '../../../../core/errors/failures.dart';
 import '../../domain/repositories/editor_repository.dart';
 import '../../domain/usecases/apply_adjustments.dart';
 import '../../domain/usecases/apply_curves.dart';

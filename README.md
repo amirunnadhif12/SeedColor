@@ -3,7 +3,7 @@
 **SeedColor by DevSeed Studio**
 
 > Aplikasi koreksi warna dan color grading profesional untuk Android — terinspirasi Adobe Lightroom Mobile.
-> **Status**: 🎨 UI Redesign ke Brand Biru (#0A84FF) dan Bottom Navigation 4-Tab telah selesai diimplementasikan.
+> **Status**: 🎨 UI Redesign ke Brand Biru (#0A84FF), Bottom Navigation 4-Tab, serta integrasi BLoC dengan Panel Light & Color (Step 7) telah selesai diimplementasikan.
 
 ---
 
@@ -512,7 +512,7 @@ flutter test test/features/editor/presentation/bloc/
   - Top 70%: Preview gambar (image canvas mock)
   - Bottom 30%: Tool panel (Light, Color, Effects, Detail, Geometry, Masking)
   - Top bar: Back, Undo, Redo, Share
-- [ ] Buat `ImageCanvas` — CustomPainter yang menggunakan shader (masih canvas static mockup)
+- [x] Buat `ImageCanvas` — CustomPainter yang menggunakan shader (masih canvas static mockup)
 - [x] Buat `ToolSelector` — bar horizontal untuk pilih tool
 - [x] Buat `AdjustmentPanel` — container untuk panel aktif (sliders Lightroom-style)
 
@@ -562,10 +562,10 @@ flutter run
 > 🎉 Ini titik di mana aplikasi mulai terasa "real"!
 
 **Apa yang dikerjakan:**
-- [ ] Buat `LightPanel` — 6 slider + tombol Auto
-- [ ] Buat `ColorPanel` — 4 slider + visual temperature indicator
-- [ ] Hubungkan panel → BLoC → Shader
-- [ ] Test: geser slider, preview harus berubah real-time
+- [x] Buat `LightPanel` — 6 slider + tombol Auto
+- [x] Buat `ColorPanel` — 4 slider + visual temperature indicator
+- [x] Hubungkan panel → BLoC → Shader
+- [x] Test: geser slider, preview harus berubah real-time
 
 **File yang dibuat:**
 ```
