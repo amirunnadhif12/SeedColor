@@ -72,3 +72,4 @@ flutter:
     - lib/shaders/curves.frag
     - lib/shaders/effects.frag
     - lib/shaders/color_grading.frag
+    - lib/shaders/composite.frag

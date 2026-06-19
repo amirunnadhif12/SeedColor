@@ -406,13 +406,13 @@ flutter run
 > ⚠️ Ini adalah JANTUNG aplikasi. Semua adjustment diterapkan di GPU via shader.
 
 **Apa yang dikerjakan:**
-- [ ] Buat `adjustments.frag` — Exposure, Contrast, Highlights, Shadows, Whites, Blacks
-- [ ] Buat `color_adjustments.frag` — Temperature, Tint, Vibrance, Saturation
-- [ ] Buat `curves.frag` — LUT-based curve application per channel
-- [ ] Buat `effects.frag` — Texture, Clarity, Dehaze, Vignette, Grain
-- [ ] Buat `color_grading.frag` — Shadow/Midtone/Highlight color wheels
-- [ ] Buat `composite.frag` — Chain semua shader dalam urutan benar
-- [ ] Register shaders di `pubspec.yaml` (bagian `flutter: > shaders:`)
+- [x] Buat `adjustments.frag` — Exposure, Contrast, Highlights, Shadows, Whites, Blacks
+- [x] Buat `color_adjustments.frag` — Temperature, Tint, Vibrance, Saturation
+- [x] Buat `curves.frag` — LUT-based curve application per channel
+- [x] Buat `effects.frag` — Texture, Clarity, Dehaze, Vignette, Grain
+- [x] Buat `color_grading.frag` — Shadow/Midtone/Highlight color wheels
+- [x] Buat `composite.frag` — Chain semua shader dalam urutan benar
+- [x] Register shaders di `pubspec.yaml` (bagian `flutter: > shaders:`)
 
 **File yang dibuat:**
 ```
