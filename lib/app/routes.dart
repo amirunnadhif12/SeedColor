@@ -1,36 +1,99 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'main_scaffold.dart';
-import '../../features/editor/presentation/pages/editor_page.dart';
+import '../features/library/presentation/pages/library_page.dart';
+import '../features/presets/presentation/pages/preset_browser_page.dart';
+import '../features/editor/presentation/pages/editor_page.dart';
+import '../features/profile/presentation/pages/profile_page.dart';
 
 /// 🌱 SeedColor — Router Configuration
 ///
-/// Menggunakan GoRouter untuk declarative routing.
-/// Bottom navigation menggunakan MainScaffold sebagai shell.
+/// Menggunakan GoRouter dengan StatefulShellRoute untuk
+/// bottom navigation yang persistent antar tab.
+/// Setiap tab memiliki navigasi stack sendiri.
 class AppRoutes {
   AppRoutes._();
 
-  static const String home = '/';
+  // ─── Route Paths ─────────────────────────────────────
+  static const String library = '/library';
+  static const String presets = '/presets';
+  static const String edit = '/edit';
+  static const String profile = '/profile';
   static const String editor = '/editor';
 
+  // ─── Navigation Key ──────────────────────────────────
+  static final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
   static final GoRouter router = GoRouter(
-    initialLocation: home,
+    navigatorKey: _rootNavigatorKey,
+    initialLocation: library,
     routes: [
-      // Main scaffold dengan bottom nav
-      GoRoute(
-        path: home,
-        name: 'home',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const MainScaffold(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        ),
+      // ─── ShellRoute: Bottom Navigation ──────────────
+      // Membungkus 4 tab utama agar bottom nav tetap
+      // persistent saat navigasi antar tab.
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainScaffold(navigationShell: navigationShell);
+        },
+        branches: [
+          // Tab 0: Library
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: library,
+                name: 'library',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: LibraryPage(),
+                ),
+              ),
+            ],
+          ),
+
+          // Tab 1: Presets
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: presets,
+                name: 'presets',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: PresetBrowserPage(),
+                ),
+              ),
+            ],
+          ),
+
+          // Tab 2: Edit
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: edit,
+                name: 'edit',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: EditorPage(photoId: 'sample'),
+                ),
+              ),
+            ],
+          ),
+
+          // Tab 3: Profile
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: profile,
+                name: 'profile',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: ProfilePage(),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
 
-      // Standalone editor (masuk dari library, tanpa bottom nav)
+      // ─── Standalone Editor ────────────────────────────
+      // Masuk dari library (tanpa bottom nav, full screen)
       GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
         path: '$editor/:photoId',
         name: 'editor',
         pageBuilder: (context, state) {
