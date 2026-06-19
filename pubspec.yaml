@@ -64,6 +64,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/presets/
+    - img/LOGO.png
 
   # Fragment Shaders for real-time image processing
   shaders:

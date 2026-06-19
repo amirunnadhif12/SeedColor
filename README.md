@@ -448,12 +448,12 @@ flutter build apk --debug
 #### 🔹 Step 4: Editor — Domain Layer (Minggu 3-4)
 
 **Apa yang dikerjakan:**
-- [ ] Buat entity `EditParameters` — semua nilai adjustment (immutable, copyWith)
-- [ ] Buat entity `CurveData` — control points per channel + spline generator
-- [ ] Buat entity `HslAdjustments` — per-color H/S/L values (8 warna)
-- [ ] Buat entity `EditSession` — sesi editing (foto + parameters + metadata)
-- [ ] Buat repository interface `EditorRepository`
-- [ ] Buat use cases: `ApplyAdjustments`, `ApplyCurves`, `ApplyHSL`, `ExportImage`, `ResetAdjustments`
+- [x] Buat entity `EditParameters` — semua nilai adjustment (immutable, copyWith)
+- [x] Buat entity `CurveData` — control points per channel + spline generator
+- [x] Buat entity `HslAdjustments` — per-color H/S/L values (8 warna)
+- [x] Buat entity `EditSession` — sesi editing (foto + parameters + metadata)
+- [x] Buat repository interface `EditorRepository`
+- [x] Buat use cases: `ApplyAdjustments`, `ApplyCurves`, `ApplyHSL`, `ExportImage`, `ResetAdjustments`
 
 **File yang dibuat:**
 ```
