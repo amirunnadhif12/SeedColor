@@ -708,12 +708,12 @@ lib/features/editor/presentation/widgets/
   - Header dengan logo kustom (Leaf C) dan Settings gear
   - Grid menu stats (Semua Foto, Favorit, Album, Tempat Sampah)
   - List album (Nature, City, Portrait, Travel)
-- [ ] Buat `PhotoGrid` — thumbnail grid dengan lazy loading
-- [ ] Buat `PhotoThumbnail` — card foto dengan rating overlay
-- [ ] Buat `AlbumCard` — card album
-- [ ] Import dari gallery (image_picker)
-- [ ] Database setup (drift/SQLite) untuk metadata foto
-- [ ] Rating bintang + Flag system
+- [x] Buat `PhotoGrid` — thumbnail grid dengan lazy loading
+- [x] Buat `PhotoThumbnail` — card foto dengan rating overlay
+- [x] Buat `AlbumCard` — card album
+- [x] Import dari gallery (image_picker)
+- [x] Database setup (drift/SQLite) untuk metadata foto
+- [x] Rating bintang + Flag system
 
 **File yang dibuat:**
 ```
