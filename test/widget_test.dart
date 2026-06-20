@@ -9,8 +9,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:seed_color/app/app.dart';
+import 'package:seed_color/app/di/injection.dart';
+import 'package:seed_color/core/database/app_database.dart';
 
 void main() {
+  setUp(() async {
+    if (!sl.isRegistered<AppDatabase>()) {
+      await initDependencies();
+    }
+  });
+
   testWidgets('App loads smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const SeedColorApp());

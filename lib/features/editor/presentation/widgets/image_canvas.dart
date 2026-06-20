@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../domain/entities/hsl_adjustments.dart';
 
 /// 🌱 SeedColor — Image Canvas Widget
 ///
@@ -23,11 +24,32 @@ class ImageCanvas extends StatelessWidget {
   final double vibrance;
   final double saturation;
 
+  final HslAdjustments hslAdjustments;
+
   final double textureAdjust;
   final double clarity;
   final double dehaze;
   final double vignette;
   final double grain;
+
+  // Detail Panel
+  final double sharpeningAmount;
+  final double sharpeningRadius;
+  final double sharpeningDetail;
+  final double sharpeningMasking;
+  final double luminanceNR;
+  final double colorNR;
+
+  // Optics Panel
+  final bool removeChromaticAberration;
+  final bool enableLensCorrection;
+
+  // Color Grading
+  final List<double> shadowsColor;
+  final List<double> midtonesColor;
+  final List<double> highlightsColor;
+  final double cgBlending;
+  final double cgBalance;
 
   const ImageCanvas({
     super.key,
@@ -44,11 +66,25 @@ class ImageCanvas extends StatelessWidget {
     required this.tint,
     required this.vibrance,
     required this.saturation,
+    required this.hslAdjustments,
     required this.textureAdjust,
     required this.clarity,
     required this.dehaze,
     required this.vignette,
     required this.grain,
+    required this.sharpeningAmount,
+    required this.sharpeningRadius,
+    required this.sharpeningDetail,
+    required this.sharpeningMasking,
+    required this.luminanceNR,
+    required this.colorNR,
+    required this.removeChromaticAberration,
+    required this.enableLensCorrection,
+    required this.shadowsColor,
+    required this.midtonesColor,
+    required this.highlightsColor,
+    required this.cgBlending,
+    required this.cgBalance,
   });
 
   @override
@@ -82,11 +118,25 @@ class ImageCanvas extends StatelessWidget {
                   tint: tint,
                   vibrance: vibrance,
                   saturation: saturation,
+                  hslAdjustments: hslAdjustments,
                   textureAdjust: textureAdjust,
                   clarity: clarity,
                   dehaze: dehaze,
                   vignette: vignette,
                   grain: grain,
+                  sharpeningAmount: sharpeningAmount,
+                  sharpeningRadius: sharpeningRadius,
+                  sharpeningDetail: sharpeningDetail,
+                  sharpeningMasking: sharpeningMasking,
+                  luminanceNR: luminanceNR,
+                  colorNR: colorNR,
+                  removeChromaticAberration: removeChromaticAberration,
+                  enableLensCorrection: enableLensCorrection,
+                  shadowsColor: shadowsColor,
+                  midtonesColor: midtonesColor,
+                  highlightsColor: highlightsColor,
+                  cgBlending: cgBlending,
+                  cgBalance: cgBalance,
                 ),
               ),
             ),
@@ -115,11 +165,31 @@ class ShaderPainter extends CustomPainter {
   final double vibrance;
   final double saturation;
 
+  final HslAdjustments hslAdjustments;
+
   final double textureAdjust;
   final double clarity;
   final double dehaze;
   final double vignette;
   final double grain;
+
+  // Detail Panel
+  final double sharpeningAmount;
+  final double sharpeningRadius;
+  final double sharpeningDetail;
+  final double sharpeningMasking;
+  final double luminanceNR;
+  final double colorNR;
+
+  // Optics Panel
+  final bool removeChromaticAberration;
+  final bool enableLensCorrection;
+
+  final List<double> shadowsColor;
+  final List<double> midtonesColor;
+  final List<double> highlightsColor;
+  final double cgBlending;
+  final double cgBalance;
 
   ShaderPainter({
     required this.shader,
@@ -135,11 +205,25 @@ class ShaderPainter extends CustomPainter {
     required this.tint,
     required this.vibrance,
     required this.saturation,
+    required this.hslAdjustments,
     required this.textureAdjust,
     required this.clarity,
     required this.dehaze,
     required this.vignette,
     required this.grain,
+    required this.sharpeningAmount,
+    required this.sharpeningRadius,
+    required this.sharpeningDetail,
+    required this.sharpeningMasking,
+    required this.luminanceNR,
+    required this.colorNR,
+    required this.removeChromaticAberration,
+    required this.enableLensCorrection,
+    required this.shadowsColor,
+    required this.midtonesColor,
+    required this.highlightsColor,
+    required this.cgBlending,
+    required this.cgBalance,
   });
 
   @override
@@ -162,10 +246,39 @@ class ShaderPainter extends CustomPainter {
     shader.setFloat(10, vibrance);
     shader.setFloat(11, saturation);
 
-    // HSL (24 floats, indexes 12 to 35) -> Pass 0.0
-    for (int i = 12; i < 36; i++) {
-      shader.setFloat(i, 0.0);
-    }
+    // HSL Mixer (24 floats, indexes 12 to 35)
+    // Red (12-14)
+    shader.setFloat(12, hslAdjustments.red.hue);
+    shader.setFloat(13, hslAdjustments.red.saturation);
+    shader.setFloat(14, hslAdjustments.red.lightness);
+    // Orange (15-17)
+    shader.setFloat(15, hslAdjustments.orange.hue);
+    shader.setFloat(16, hslAdjustments.orange.saturation);
+    shader.setFloat(17, hslAdjustments.orange.lightness);
+    // Yellow (18-20)
+    shader.setFloat(18, hslAdjustments.yellow.hue);
+    shader.setFloat(19, hslAdjustments.yellow.saturation);
+    shader.setFloat(20, hslAdjustments.yellow.lightness);
+    // Green (21-23)
+    shader.setFloat(21, hslAdjustments.green.hue);
+    shader.setFloat(22, hslAdjustments.green.saturation);
+    shader.setFloat(23, hslAdjustments.green.lightness);
+    // Aqua (24-26)
+    shader.setFloat(24, hslAdjustments.aqua.hue);
+    shader.setFloat(25, hslAdjustments.aqua.saturation);
+    shader.setFloat(26, hslAdjustments.aqua.lightness);
+    // Blue (27-29)
+    shader.setFloat(27, hslAdjustments.blue.hue);
+    shader.setFloat(28, hslAdjustments.blue.saturation);
+    shader.setFloat(29, hslAdjustments.blue.lightness);
+    // Purple (30-32)
+    shader.setFloat(30, hslAdjustments.purple.hue);
+    shader.setFloat(31, hslAdjustments.purple.saturation);
+    shader.setFloat(32, hslAdjustments.purple.lightness);
+    // Magenta (33-35)
+    shader.setFloat(33, hslAdjustments.magenta.hue);
+    shader.setFloat(34, hslAdjustments.magenta.saturation);
+    shader.setFloat(35, hslAdjustments.magenta.lightness);
 
     // 3. Effects (Texture, Clarity, Dehaze, Vignette, Grain)
     shader.setFloat(36, textureAdjust);
@@ -176,21 +289,31 @@ class ShaderPainter extends CustomPainter {
 
     // 4. Color Grading (ShadowsColor, MidtonesColor, HighlightsColor, Blending, Balance)
     // Shadows RGB tint (41, 42, 43)
-    shader.setFloat(41, 0.0);
-    shader.setFloat(42, 0.0);
-    shader.setFloat(43, 0.0);
+    shader.setFloat(41, shadowsColor[0]);
+    shader.setFloat(42, shadowsColor[1]);
+    shader.setFloat(43, shadowsColor[2]);
     // Midtones RGB tint (44, 45, 46)
-    shader.setFloat(44, 0.0);
-    shader.setFloat(45, 0.0);
-    shader.setFloat(46, 0.0);
+    shader.setFloat(44, midtonesColor[0]);
+    shader.setFloat(45, midtonesColor[1]);
+    shader.setFloat(46, midtonesColor[2]);
     // Highlights RGB tint (47, 48, 49)
-    shader.setFloat(47, 0.0);
-    shader.setFloat(48, 0.0);
-    shader.setFloat(49, 0.0);
-    // Blending (50)
-    shader.setFloat(50, 0.5);
-    // Balance (51)
-    shader.setFloat(51, 0.0);
+    shader.setFloat(47, highlightsColor[0]);
+    shader.setFloat(48, highlightsColor[1]);
+    shader.setFloat(49, highlightsColor[2]);
+    // Blending (50) - normalisasi 0-100 ke 0-1
+    shader.setFloat(50, cgBlending / 100.0);
+    // Balance (51) - normalisasi -100-100 ke -1.0-1.0
+    shader.setFloat(51, cgBalance / 100.0);
+
+    // 5. Detail & Optics (indexes 52 to 59)
+    shader.setFloat(52, sharpeningAmount);
+    shader.setFloat(53, sharpeningRadius);
+    shader.setFloat(54, sharpeningDetail);
+    shader.setFloat(55, sharpeningMasking);
+    shader.setFloat(56, luminanceNR);
+    shader.setFloat(57, colorNR);
+    shader.setFloat(58, removeChromaticAberration ? 1.0 : 0.0);
+    shader.setFloat(59, enableLensCorrection ? 1.0 : 0.0);
 
     // Bind Samplers
     shader.setImageSampler(0, image);
@@ -213,11 +336,25 @@ class ShaderPainter extends CustomPainter {
         oldDelegate.tint != tint ||
         oldDelegate.vibrance != vibrance ||
         oldDelegate.saturation != saturation ||
+        oldDelegate.hslAdjustments != hslAdjustments ||
         oldDelegate.textureAdjust != textureAdjust ||
         oldDelegate.clarity != clarity ||
         oldDelegate.dehaze != dehaze ||
         oldDelegate.vignette != vignette ||
         oldDelegate.grain != grain ||
+        oldDelegate.sharpeningAmount != sharpeningAmount ||
+        oldDelegate.sharpeningRadius != sharpeningRadius ||
+        oldDelegate.sharpeningDetail != sharpeningDetail ||
+        oldDelegate.sharpeningMasking != sharpeningMasking ||
+        oldDelegate.luminanceNR != luminanceNR ||
+        oldDelegate.colorNR != colorNR ||
+        oldDelegate.removeChromaticAberration != removeChromaticAberration ||
+        oldDelegate.enableLensCorrection != enableLensCorrection ||
+        oldDelegate.shadowsColor != shadowsColor ||
+        oldDelegate.midtonesColor != midtonesColor ||
+        oldDelegate.highlightsColor != highlightsColor ||
+        oldDelegate.cgBlending != cgBlending ||
+        oldDelegate.cgBalance != cgBalance ||
         oldDelegate.image != image ||
         oldDelegate.lutImage != lutImage;
   }

@@ -36,6 +36,9 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
     on<UpdateCurves>(_onUpdateCurves);
     on<UpdateEffects>(_onUpdateEffects);
     on<UpdateColorGrading>(_onUpdateColorGrading);
+    on<UpdateDetail>(_onUpdateDetail);
+    on<UpdateOptics>(_onUpdateOptics);
+    on<UpdateGeometry>(_onUpdateGeometry);
     on<ResetAll>(_onResetAll);
     on<Export>(_onExport);
   }
@@ -128,6 +131,39 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
     UpdateColorGrading event,
     Emitter<EditorState> emit,
   ) {
+    final session = state.session;
+    if (session == null) return;
+
+    final result = applyAdjustments(session, event.parameters);
+    result.fold(
+      (failure) => emit(state.copyWith(failure: failure)),
+      (updatedSession) => emit(state.copyWith(session: updatedSession)),
+    );
+  }
+
+  void _onUpdateDetail(UpdateDetail event, Emitter<EditorState> emit) {
+    final session = state.session;
+    if (session == null) return;
+
+    final result = applyAdjustments(session, event.parameters);
+    result.fold(
+      (failure) => emit(state.copyWith(failure: failure)),
+      (updatedSession) => emit(state.copyWith(session: updatedSession)),
+    );
+  }
+
+  void _onUpdateOptics(UpdateOptics event, Emitter<EditorState> emit) {
+    final session = state.session;
+    if (session == null) return;
+
+    final result = applyAdjustments(session, event.parameters);
+    result.fold(
+      (failure) => emit(state.copyWith(failure: failure)),
+      (updatedSession) => emit(state.copyWith(session: updatedSession)),
+    );
+  }
+
+  void _onUpdateGeometry(UpdateGeometry event, Emitter<EditorState> emit) {
     final session = state.session;
     if (session == null) return;
 

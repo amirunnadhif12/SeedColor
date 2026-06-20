@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'main_scaffold.dart';
 import '../features/library/presentation/pages/library_page.dart';
+import '../features/library/presentation/pages/album_detail_page.dart';
 import '../features/presets/presentation/pages/preset_browser_page.dart';
 import '../features/editor/presentation/pages/editor_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
@@ -45,6 +46,17 @@ class AppRoutes {
                 pageBuilder: (context, state) => const NoTransitionPage(
                   child: LibraryPage(),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'album/:id',
+                    name: 'album',
+                    builder: (context, state) {
+                      final albumId = state.pathParameters['id'] ?? '';
+                      final albumName = state.uri.queryParameters['name'] ?? '';
+                      return AlbumDetailPage(albumId: albumId, albumName: albumName);
+                    },
+                  ),
+                ],
               ),
             ],
           ),

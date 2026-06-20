@@ -118,6 +118,34 @@ void main() {
       expect(bloc.state.session!.currentParameters.contrast, equals(10.0));
     });
 
+    test('UpdateDetail should emit updated parameters', () async {
+      final newParams = session.currentParameters.copyWith(sharpeningAmount: 80.0, colorNR: 45.0);
+      bloc.add(UpdateDetail(newParams));
+
+      await Future.delayed(Duration.zero);
+      expect(bloc.state.session!.currentParameters.sharpeningAmount, equals(80.0));
+      expect(bloc.state.session!.currentParameters.colorNR, equals(45.0));
+    });
+
+    test('UpdateOptics should emit updated parameters', () async {
+      final newParams = session.currentParameters.copyWith(removeChromaticAberration: true, enableLensCorrection: true);
+      bloc.add(UpdateOptics(newParams));
+
+      await Future.delayed(Duration.zero);
+      expect(bloc.state.session!.currentParameters.removeChromaticAberration, isTrue);
+      expect(bloc.state.session!.currentParameters.enableLensCorrection, isTrue);
+    });
+
+    test('UpdateGeometry should emit updated parameters', () async {
+      final newParams = session.currentParameters.copyWith(rotation: 15.0, flipHorizontal: true, aspectRatio: '16:9');
+      bloc.add(UpdateGeometry(newParams));
+
+      await Future.delayed(Duration.zero);
+      expect(bloc.state.session!.currentParameters.rotation, equals(15.0));
+      expect(bloc.state.session!.currentParameters.flipHorizontal, isTrue);
+      expect(bloc.state.session!.currentParameters.aspectRatio, equals('16:9'));
+    });
+
     test('ResetAll should revert all settings to identity', () async {
       // Modify first
       bloc.add(UpdateLight(session.currentParameters.copyWith(exposure: 3.0)));

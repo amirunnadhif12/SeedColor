@@ -12,12 +12,16 @@ class ColorPanel extends StatelessWidget {
   final EditParameters parameters;
   final void Function(String key, double value) onChanged;
   final void Function(String key, double value) onChangeEnd;
+  final VoidCallback? onMixerPressed;
+  final VoidCallback? onGradingPressed;
 
   const ColorPanel({
     super.key,
     required this.parameters,
     required this.onChanged,
     required this.onChangeEnd,
+    this.onMixerPressed,
+    this.onGradingPressed,
   });
 
   @override
@@ -54,9 +58,7 @@ class ColorPanel extends StatelessWidget {
               children: [
                 // Visual Color Mixer Chip placeholder atau tombol HSL shortcut
                 GestureDetector(
-                  onTap: () {
-                    // Bisa ditambahkan navigasi langsung ke HSL mixer nanti
-                  },
+                  onTap: onMixerPressed,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -78,6 +80,41 @@ class ColorPanel extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           'Mixer',
+                          style: AppTypography.labelMedium.copyWith(
+                            color: AppColors.textPrimary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Tombol Color Grading shortcut
+                GestureDetector(
+                  onTap: onGradingPressed,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF141522),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.lens_blur_rounded,
+                          size: 14,
+                          color: AppColors.toolColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Grading',
                           style: AppTypography.labelMedium.copyWith(
                             color: AppColors.textPrimary,
                             fontSize: 11,

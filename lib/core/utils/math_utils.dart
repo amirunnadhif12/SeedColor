@@ -135,7 +135,7 @@ class MathUtils {
     return lut;
   }
 
-  /// Internal Catmull-Rom interpolation per component.
+  /// Internal Catmull-Rom/Cardinal interpolation per component.
   static double _catmullRom(
     double t,
     double p0,
@@ -148,10 +148,17 @@ class MathUtils {
     final t2 = t * t;
     final t3 = t2 * t;
 
-    return (2 * p1) +
-        (-p0 + p2) * s * t +
-        (2 * p0 - 5 * p1 + 4 * p2 - p3) * s * t2 +
-        (-p0 + 3 * p1 - 3 * p2 + p3) * s * t3;
+    // Hermite basis functions
+    final h1 = 2 * t3 - 3 * t2 + 1;
+    final h2 = -2 * t3 + 3 * t2;
+    final h3 = t3 - 2 * t2 + t;
+    final h4 = t3 - t2;
+
+    // Tangents scaled by tension parameter s
+    final m1 = s * (p2 - p0);
+    final m2 = s * (p3 - p1);
+
+    return p1 * h1 + p2 * h2 + m1 * h3 + m2 * h4;
   }
 
   // ─── Cubic Bezier ──────────────────────────────────────

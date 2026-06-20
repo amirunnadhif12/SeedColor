@@ -138,8 +138,20 @@ void main() {
       final params2 = EditParameters.identity();
       expect(params1, equals(params2));
 
-      final params3 = params1.copyWith(exposure: 1.5);
+      final params3 = params1.copyWith(
+        exposure: 1.5,
+        sharpeningAmount: 60.0,
+        removeChromaticAberration: true,
+        rotation: 12.5,
+        flipHorizontal: true,
+        aspectRatio: '1:1',
+      );
       expect(params3.exposure, equals(1.5));
+      expect(params3.sharpeningAmount, equals(60.0));
+      expect(params3.removeChromaticAberration, isTrue);
+      expect(params3.rotation, equals(12.5));
+      expect(params3.flipHorizontal, isTrue);
+      expect(params3.aspectRatio, equals('1:1'));
       expect(params3.contrast, equals(0.0));
     });
   });

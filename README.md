@@ -3,7 +3,7 @@
 **SeedColor by DevSeed Studio**
 
 > Aplikasi koreksi warna dan color grading profesional untuk Android — terinspirasi Adobe Lightroom Mobile.
-> **Status**: 🎨 UI Redesign ke Brand Biru (#0A84FF), Bottom Navigation 4-Tab, serta integrasi BLoC dengan Panel Light & Color (Step 7) telah selesai diimplementasikan.
+> **Status**: 🎨 UI Redesign ke Brand Biru (#0A84FF), Bottom Navigation 4-Tab, integrasi BLoC dengan Panel Light & Color (Step 7), Panel HSL Color Mixer (Step 8), Panel Curves (Step 9), serta Panel Effects & Color Grading (Step 10) telah selesai diimplementasikan.
 
 ---
 
@@ -588,9 +588,9 @@ flutter run
 #### 🔹 Step 8: Panel — HSL Color Mixer (Minggu 6-7)
 
 **Apa yang dikerjakan:**
-- [ ] Buat `HslPanel` — color selector strip (8 warna) + 3 slider per warna
-- [ ] Implementasi HSL adjustment di shader (per-hue targeting)
-- [ ] Mini color preview yang berubah sesuai adjustment
+- [x] Buat `HslPanel` — color selector strip (8 warna) + 3 slider per warna
+- [x] Implementasi HSL adjustment di shader (per-hue targeting)
+- [x] Mini color preview yang berubah sesuai adjustment
 
 **File yang dibuat:**
 ```
@@ -612,13 +612,13 @@ flutter run
 #### 🔹 Step 9: Panel — Curves (Minggu 7-8)
 
 **Apa yang dikerjakan:**
-- [ ] Buat `CurvesPanel` — interactive curve editor
-- [ ] Buat `CurvePainter` — CustomPainter untuk gambar kurva
-- [ ] Buat `CurveControlPoint` — draggable point di kurva
-- [ ] Channel selector: RGB (putih), Red, Green, Blue
-- [ ] Histogram sebagai backdrop kurva
-- [ ] Touch to add point, long press to delete
-- [ ] Generate LUT texture dari curve points → kirim ke shader
+- [x] Buat `CurvesPanel` — interactive curve editor
+- [x] Buat `CurvePainter` — CustomPainter untuk gambar kurva
+- [x] Buat `CurveControlPoint` — draggable point di kurva
+- [x] Channel selector: RGB (putih), Red, Green, Blue
+- [x] Histogram sebagai backdrop kurva
+- [x] Touch to add point, long press to delete
+- [x] Generate LUT texture dari curve points → kirim ke shader
 
 **File yang dibuat:**
 ```
@@ -644,9 +644,9 @@ flutter run
 #### 🔹 Step 10: Panel — Effects & Color Grading (Minggu 8-9)
 
 **Apa yang dikerjakan:**
-- [ ] Buat `EffectsPanel` — 5 slider (Texture, Clarity, Dehaze, Vignette, Grain)
-- [ ] Buat `ColorGradingPanel` — 3 color wheels + 2 slider
-- [ ] Implementasi color wheel widget (tap/drag untuk pilih warna)
+- [x] Buat `EffectsPanel` — 5 slider (Texture, Clarity, Dehaze, Vignette, Grain)
+- [x] Buat `ColorGradingPanel` — 3 color wheels + 2 slider
+- [x] Implementasi color wheel widget (tap/drag untuk pilih warna)
 
 **File yang dibuat:**
 ```
@@ -668,9 +668,9 @@ flutter run
 #### 🔹 Step 11: Panel — Detail & Optics (Minggu 9-10)
 
 **Apa yang dikerjakan:**
-- [ ] Buat `DetailPanel` — Sharpening (4 slider) + Noise Reduction (2 slider)
-- [ ] Buat `OpticsPanel` — Chromatic Aberration + Lens Correction toggles
-- [ ] Implementasi sharpening via convolution kernel di shader
+- [x] Buat `DetailPanel` — Sharpening (4 slider) + Noise Reduction (2 slider)
+- [x] Buat `OpticsPanel` — Chromatic Aberration + Lens Correction toggles
+- [x] Implementasi sharpening via convolution kernel di shader
 
 **File yang dibuat:**
 ```
@@ -684,12 +684,11 @@ lib/features/editor/presentation/widgets/panels/
 #### 🔹 Step 12: Panel — Geometry/Crop (Minggu 10-11)
 
 **Apa yang dikerjakan:**
-- [ ] Buat `GeometryPanel` — Crop tool + Rotate + Perspective
-- [ ] Buat `CropOverlay` — visual crop frame dengan handles
-- [ ] Buat `CropHandles` — draggable corner/edge handles
-- [ ] Aspect ratio selector (Free, 1:1, 4:3, 16:9, 3:2)
-- [ ] Rotate slider dengan grid overlay
-- [ ] Flip horizontal/vertical
+- [x] Buat `GeometryPanel` — Crop tool + Rotate + Perspective
+- [x] Buat `CropOverlay` — visual crop frame dengan handles
+- [x] Aspect ratio selector (Free, 1:1, 4:3, 16:9, 3:2)
+- [x] Rotate slider dengan grid overlay
+- [x] Flip horizontal/vertical
 
 **File yang dibuat:**
 ```
@@ -697,8 +696,7 @@ lib/features/editor/presentation/widgets/
 ├── panels/
 │   └── geometry_panel.dart
 └── crop/
-    ├── crop_overlay.dart
-    └── crop_handles.dart
+    └── crop_overlay.dart
 ```
 
 ---

@@ -66,6 +66,16 @@ uniform vec3 uHighlightsColor;  // Highlights RGB tint color
 uniform float uBlending;        // Blending factor (0.0 to 1.0)
 uniform float uBalance;         // Balance factor (-1.0 to 1.0)
 
+// --- Step 5: Detail & Optics ---
+uniform float uSharpeningAmount;
+uniform float uSharpeningRadius;
+uniform float uSharpeningDetail;
+uniform float uSharpeningMasking;
+uniform float uLuminanceNR;
+uniform float uColorNR;
+uniform float uRemoveChromaticAberration;
+uniform float uEnableLensCorrection;
+
 out vec4 fragColor;
 
 // --- RGB/HSL Conversion Utilities ---
@@ -132,9 +142,54 @@ float rand(vec2 co) {
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
+vec3 rgb2ycbcr(vec3 c) {
+    float y = 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
+    float cb = (c.b - y) * 0.564 + 0.5;
+    float cr = (c.r - y) * 0.713 + 0.5;
+    return vec3(y, cb, cr);
+}
+
+vec3 ycbcr2rgb(vec3 ycc) {
+    float y = ycc.x;
+    float cb = ycc.y - 0.5;
+    float cr = ycc.z - 0.5;
+    float r = y + 1.402 * cr;
+    float g = y - 0.344 * cb - 0.714 * cr;
+    float b = y + 1.772 * cb;
+    return vec3(max(0.0, r), max(0.0, g), max(0.0, b));
+}
+
 void main() {
     vec2 uv = FlutterFragCoord() / uSize;
-    vec4 color = texture(uTexture, uv);
+    
+    // Lens Correction
+    if (uEnableLensCorrection > 0.0) {
+        vec2 toCenter = uv - vec2(0.5);
+        float r2 = dot(toCenter, toCenter);
+        float k1 = -0.06;
+        uv = vec2(0.5) + toCenter * (1.0 + k1 * r2);
+        
+        if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+            fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            return;
+        }
+    }
+    
+    // Chromatic Aberration
+    vec4 color;
+    if (uRemoveChromaticAberration > 0.0) {
+        vec2 toCenter = uv - vec2(0.5);
+        float dist = length(toCenter);
+        vec2 uvRed = vec2(0.5) + toCenter * (1.0 - 0.0015 * dist);
+        vec2 uvBlue = vec2(0.5) + toCenter * (1.0 + 0.0015 * dist);
+        
+        color.r = texture(uTexture, uvRed).r;
+        color.g = texture(uTexture, uv).g;
+        color.b = texture(uTexture, uvBlue).b;
+        color.a = texture(uTexture, uv).a;
+    } else {
+        color = texture(uTexture, uv);
+    }
     
     // ==========================================
     // 1. Light Adjustments (adjustments.frag)
@@ -371,6 +426,81 @@ void main() {
         float grainWeight = 1.0 - 4.0 * (luma - 0.5) * (luma - 0.5);
         grainWeight = clamp(grainWeight, 0.1, 1.0);
         color.rgb += (noise - 0.5) * (uGrain * 0.0015) * grainWeight;
+    }
+    
+    color.rgb = clamp(color.rgb, 0.0, 1.0);
+    
+    // ==========================================
+    // 4.5. Sharpening & Noise Reduction
+    // ==========================================
+    
+    // Sharpening (Amount, Radius, Detail, Masking)
+    if (uSharpeningAmount > 0.0) {
+        vec2 offset = vec2(uSharpeningRadius) / uSize;
+        vec3 center = texture(uTexture, uv).rgb;
+        vec3 left   = texture(uTexture, uv + vec2(-offset.x, 0.0)).rgb;
+        vec3 right  = texture(uTexture, uv + vec2(offset.x, 0.0)).rgb;
+        vec3 top    = texture(uTexture, uv + vec2(0.0, -offset.y)).rgb;
+        vec3 bottom = texture(uTexture, uv + vec2(0.0, offset.y)).rgb;
+        
+        // Edge detection for masking
+        float lCenter = dot(center, vec3(0.299, 0.587, 0.114));
+        float lLeft   = dot(left, vec3(0.299, 0.587, 0.114));
+        float lRight  = dot(right, vec3(0.299, 0.587, 0.114));
+        float lTop    = dot(top, vec3(0.299, 0.587, 0.114));
+        float lBottom = dot(bottom, vec3(0.299, 0.587, 0.114));
+        
+        float edge = (abs(lCenter - lLeft) + abs(lCenter - lRight) + abs(lCenter - lTop) + abs(lCenter - lBottom)) * 0.25;
+        float edgeMask = 1.0;
+        if (uSharpeningMasking > 0.0) {
+            edgeMask = smoothstep(uSharpeningMasking * 0.001, uSharpeningMasking * 0.001 + 0.005, edge);
+        }
+        
+        vec3 laplacian = center * 4.0 - left - right - top - bottom;
+        vec3 sharpenDelta = laplacian * (uSharpeningAmount * 0.015 * (1.0 + uSharpeningDetail * 0.01));
+        
+        color.rgb += sharpenDelta * edgeMask;
+    }
+    
+    // Noise Reduction (Luminance, Color)
+    if (uLuminanceNR > 0.0 || uColorNR > 0.0) {
+        vec3 nrColor = vec3(0.0);
+        float totalWeight = 0.0;
+        vec3 centerVal = texture(uTexture, uv).rgb;
+        float lumaCenter = dot(centerVal, vec3(0.299, 0.587, 0.114));
+        
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                vec2 sampleUv = uv + vec2(float(x), float(y)) * 1.5 / uSize;
+                vec3 sampleColor = texture(uTexture, sampleUv).rgb;
+                float sampleLuma = dot(sampleColor, vec3(0.299, 0.587, 0.114));
+                
+                float dLuma = sampleLuma - lumaCenter;
+                float wRange = exp(-dLuma * dLuma * 20.0);
+                float weight = wRange;
+                
+                nrColor += sampleColor * weight;
+                totalWeight += weight;
+            }
+        }
+        if (totalWeight > 0.0) {
+            nrColor /= totalWeight;
+        } else {
+            nrColor = centerVal;
+        }
+        
+        vec3 yccOrig = rgb2ycbcr(color.rgb);
+        vec3 yccBlurred = rgb2ycbcr(nrColor);
+        
+        if (uLuminanceNR > 0.0) {
+            float scaleY = yccOrig.x / max(yccBlurred.x, 0.001);
+            float targetY = yccBlurred.x * scaleY;
+            yccOrig.x = mix(yccOrig.x, targetY, uLuminanceNR * 0.008);
+        }
+        if (uColorNR > 0.0) {
+            yccOrig.yz = mix(yccOrig.yz, yccBlurred.yz, uColorNR * 0.008);
+        }
+        color.rgb = ycbcr2rgb(yccOrig);
     }
     
     color.rgb = clamp(color.rgb, 0.0, 1.0);

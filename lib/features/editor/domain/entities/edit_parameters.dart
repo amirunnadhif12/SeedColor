@@ -29,6 +29,30 @@ class EditParameters extends Equatable {
   final double vignette;
   final double grain;
 
+  // ─── Detail Panel ────────────────────────────────────
+  final double sharpeningAmount;
+  final double sharpeningRadius;
+  final double sharpeningDetail;
+  final double sharpeningMasking;
+  final double luminanceNR;
+  final double colorNR;
+
+  // ─── Optics Panel ────────────────────────────────────
+  final bool removeChromaticAberration;
+  final bool enableLensCorrection;
+
+  // ─── Geometry Panel ──────────────────────────────────
+  final double cropLeft;
+  final double cropTop;
+  final double cropRight;
+  final double cropBottom;
+  final double rotation; // dalam derajat (-45.0 s.d. +45.0)
+  final double perspectiveHorizontal;
+  final double perspectiveVertical;
+  final bool flipHorizontal;
+  final bool flipVertical;
+  final String aspectRatio; // 'Bebas', '1:1', '4:3', '16:9', '3:2'
+
   // ─── Color Grading ───────────────────────────────────
   // Shadows (Hue: 0-360, Saturation: 0-100)
   final double shadowsHue;
@@ -63,6 +87,24 @@ class EditParameters extends Equatable {
     this.dehaze = 0.0,
     this.vignette = 0.0,
     this.grain = 0.0,
+    this.sharpeningAmount = 40.0,
+    this.sharpeningRadius = 1.0,
+    this.sharpeningDetail = 25.0,
+    this.sharpeningMasking = 0.0,
+    this.luminanceNR = 0.0,
+    this.colorNR = 25.0,
+    this.removeChromaticAberration = false,
+    this.enableLensCorrection = false,
+    this.cropLeft = 0.0,
+    this.cropTop = 0.0,
+    this.cropRight = 1.0,
+    this.cropBottom = 1.0,
+    this.rotation = 0.0,
+    this.perspectiveHorizontal = 0.0,
+    this.perspectiveVertical = 0.0,
+    this.flipHorizontal = false,
+    this.flipVertical = false,
+    this.aspectRatio = 'Bebas',
     this.shadowsHue = 0.0,
     this.shadowsSat = 0.0,
     this.midtonesHue = 0.0,
@@ -99,6 +141,24 @@ class EditParameters extends Equatable {
     double? dehaze,
     double? vignette,
     double? grain,
+    double? sharpeningAmount,
+    double? sharpeningRadius,
+    double? sharpeningDetail,
+    double? sharpeningMasking,
+    double? luminanceNR,
+    double? colorNR,
+    bool? removeChromaticAberration,
+    bool? enableLensCorrection,
+    double? cropLeft,
+    double? cropTop,
+    double? cropRight,
+    double? cropBottom,
+    double? rotation,
+    double? perspectiveHorizontal,
+    double? perspectiveVertical,
+    bool? flipHorizontal,
+    bool? flipVertical,
+    String? aspectRatio,
     double? shadowsHue,
     double? shadowsSat,
     double? midtonesHue,
@@ -126,6 +186,24 @@ class EditParameters extends Equatable {
       dehaze: dehaze ?? this.dehaze,
       vignette: vignette ?? this.vignette,
       grain: grain ?? this.grain,
+      sharpeningAmount: sharpeningAmount ?? this.sharpeningAmount,
+      sharpeningRadius: sharpeningRadius ?? this.sharpeningRadius,
+      sharpeningDetail: sharpeningDetail ?? this.sharpeningDetail,
+      sharpeningMasking: sharpeningMasking ?? this.sharpeningMasking,
+      luminanceNR: luminanceNR ?? this.luminanceNR,
+      colorNR: colorNR ?? this.colorNR,
+      removeChromaticAberration: removeChromaticAberration ?? this.removeChromaticAberration,
+      enableLensCorrection: enableLensCorrection ?? this.enableLensCorrection,
+      cropLeft: cropLeft ?? this.cropLeft,
+      cropTop: cropTop ?? this.cropTop,
+      cropRight: cropRight ?? this.cropRight,
+      cropBottom: cropBottom ?? this.cropBottom,
+      rotation: rotation ?? this.rotation,
+      perspectiveHorizontal: perspectiveHorizontal ?? this.perspectiveHorizontal,
+      perspectiveVertical: perspectiveVertical ?? this.perspectiveVertical,
+      flipHorizontal: flipHorizontal ?? this.flipHorizontal,
+      flipVertical: flipVertical ?? this.flipVertical,
+      aspectRatio: aspectRatio ?? this.aspectRatio,
       shadowsHue: shadowsHue ?? this.shadowsHue,
       shadowsSat: shadowsSat ?? this.shadowsSat,
       midtonesHue: midtonesHue ?? this.midtonesHue,
@@ -156,6 +234,24 @@ class EditParameters extends Equatable {
         dehaze,
         vignette,
         grain,
+        sharpeningAmount,
+        sharpeningRadius,
+        sharpeningDetail,
+        sharpeningMasking,
+        luminanceNR,
+        colorNR,
+        removeChromaticAberration,
+        enableLensCorrection,
+        cropLeft,
+        cropTop,
+        cropRight,
+        cropBottom,
+        rotation,
+        perspectiveHorizontal,
+        perspectiveVertical,
+        flipHorizontal,
+        flipVertical,
+        aspectRatio,
         shadowsHue,
         shadowsSat,
         midtonesHue,

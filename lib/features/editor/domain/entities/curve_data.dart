@@ -113,6 +113,14 @@ class CurveData extends Equatable {
     return _copyWithChannel(channel, points);
   }
 
+  /// Reset saluran tertentu ke diagonal linier identity.
+  CurveData resetChannel(String channel) {
+    return _copyWithChannel(
+      channel,
+      const [math.Point(0.0, 0.0), math.Point(1.0, 1.0)],
+    );
+  }
+
   @override
   List<Object?> get props => [rgb, red, green, blue];
 }

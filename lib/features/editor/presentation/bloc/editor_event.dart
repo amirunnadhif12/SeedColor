@@ -97,6 +97,36 @@ class UpdateColorGrading extends EditorEvent {
   List<Object?> get props => [parameters];
 }
 
+/// Memperbarui parameter detail (Sharpening & Noise Reduction)
+class UpdateDetail extends EditorEvent {
+  final EditParameters parameters;
+
+  const UpdateDetail(this.parameters);
+
+  @override
+  List<Object?> get props => [parameters];
+}
+
+/// Memperbarui parameter optik (Chromatic Aberration & Lens Correction)
+class UpdateOptics extends EditorEvent {
+  final EditParameters parameters;
+
+  const UpdateOptics(this.parameters);
+
+  @override
+  List<Object?> get props => [parameters];
+}
+
+/// Memperbarui parameter geometri (Crop, Rotate, Flip, Perspektif)
+class UpdateGeometry extends EditorEvent {
+  final EditParameters parameters;
+
+  const UpdateGeometry(this.parameters);
+
+  @override
+  List<Object?> get props => [parameters];
+}
+
 /// Mengatur ulang seluruh parameter edit ke awal (identity)
 class ResetAll extends EditorEvent {
   const ResetAll();

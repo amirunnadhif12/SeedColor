@@ -1,76 +1,135 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../app/di/injection.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
+import '../../domain/entities/photo.dart';
+import '../bloc/library_bloc.dart';
+import '../bloc/library_event.dart';
+import '../bloc/library_state.dart';
+import '../widgets/album_card.dart';
+import '../widgets/photo_grid.dart';
 
-/// 🌱 SeedColor — Library Page
-///
-/// Revamped dashboard matching Screen 1 of the premium mockup.
-class LibraryPage extends StatelessWidget {
+class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
 
   @override
+  State<LibraryPage> createState() => _LibraryPageState();
+}
+
+class _LibraryPageState extends State<LibraryPage> {
+  // 0: Albums, 1: All Photos, 2: Favorites, 3: Trash
+  int _selectedSection = 0;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ─── Header ──────────────────────────────────
-            SliverToBoxAdapter(child: _buildHeader()),
-
-            // ─── Title ───────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Text(
-                  'Library',
-                  style: AppTypography.heading1.copyWith(
-                    color: AppColors.textPrimary,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
+    return BlocProvider<LibraryBloc>(
+      create: (context) => sl<LibraryBloc>()..add(LoadLibrary()),
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundDark,
+        floatingActionButton: BlocBuilder<LibraryBloc, LibraryState>(
+          builder: (context, state) {
+            if (state is LibraryLoaded) {
+              return FloatingActionButton(
+                backgroundColor: const Color(0xFF0A84FF),
+                onPressed: () {
+                  context.read<LibraryBloc>().add(ImportFromGallery());
+                },
+                child: const Icon(Icons.add_a_photo_rounded, color: Colors.white),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+        body: SafeArea(
+          child: BlocConsumer<LibraryBloc, LibraryState>(
+            listener: (context, state) {
+              if (state is LibraryLoaded && state.message != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message!),
+                    backgroundColor: AppColors.primary,
                   ),
-                ),
-              ),
-            ),
+                );
+              }
+            },
+            builder: (context, state) {
+              if (state is LibraryLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  ),
+                );
+              }
 
-            // ─── Stats Cards Grid ────────────────────────
-            SliverToBoxAdapter(child: _buildStatsCards()),
+              if (state is LibraryError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error: ${state.errorMessage}',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<LibraryBloc>().add(LoadLibrary());
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
 
-            // ─── Albums Header ───────────────────────────
-            SliverToBoxAdapter(child: _buildAlbumsHeader()),
+              if (state is LibraryLoaded) {
+                return CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    // Header
+                    SliverToBoxAdapter(child: _buildHeader()),
 
-            // ─── Album List ──────────────────────────────
-            SliverList(
-              delegate: SliverChildListDelegate([
-                _buildAlbumItem(
-                  context: context,
-                  name: 'Nature',
-                  count: 128,
-                  imagePath: 'assets/images/album_nature.png',
-                ),
-                _buildAlbumItem(
-                  context: context,
-                  name: 'City',
-                  count: 97,
-                  imagePath: 'assets/images/album_city.png',
-                ),
-                _buildAlbumItem(
-                  context: context,
-                  name: 'Portrait',
-                  count: 156,
-                  imagePath: 'assets/images/album_portrait.png',
-                ),
-                _buildAlbumItem(
-                  context: context,
-                  name: 'Travel',
-                  count: 75,
-                  imagePath: 'assets/images/album_travel.png',
-                ),
-                const SizedBox(height: 100), // Spacing for bottom nav
-              ]),
-            ),
-          ],
+                    // Title
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        child: Text(
+                          'Library',
+                          style: AppTypography.heading1.copyWith(
+                            color: AppColors.textPrimary,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Stats Cards Grid
+                    SliverToBoxAdapter(
+                      child: _buildStatsCards(
+                        allPhotosCount: state.allPhotos.length,
+                        favoritesCount: state.favoritePhotos.length,
+                        albumsCount: state.albums.length,
+                        trashCount: state.trashPhotos.length,
+                      ),
+                    ),
+
+                    // Active Section Header
+                    SliverToBoxAdapter(child: _buildSectionHeader(context)),
+
+                    // Content based on selection
+                    _buildActiveSectionContent(state),
+                  ],
+                );
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ),
     );
@@ -156,7 +215,12 @@ class LibraryPage extends StatelessWidget {
   }
 
   /// 2x2 Stats cards matching mockup layout
-  Widget _buildStatsCards() {
+  Widget _buildStatsCards({
+    required int allPhotosCount,
+    required int favoritesCount,
+    required int albumsCount,
+    required int trashCount,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Column(
@@ -164,20 +228,28 @@ class LibraryPage extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  icon: Icons.image_outlined,
-                  label: 'All Photos',
-                  count: '1,253',
-                  color: AppColors.primary,
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedSection = 1),
+                  child: _buildStatCard(
+                    icon: Icons.image_outlined,
+                    label: 'All Photos',
+                    count: allPhotosCount.toString(),
+                    color: AppColors.primary,
+                    isSelected: _selectedSection == 1,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatCard(
-                  icon: Icons.favorite_border_rounded,
-                  label: 'Favorites',
-                  count: '312',
-                  color: const Color(0xFFFF4081),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedSection = 2),
+                  child: _buildStatCard(
+                    icon: Icons.favorite_border_rounded,
+                    label: 'Favorites',
+                    count: favoritesCount.toString(),
+                    color: const Color(0xFFFF4081),
+                    isSelected: _selectedSection == 2,
+                  ),
                 ),
               ),
             ],
@@ -186,20 +258,28 @@ class LibraryPage extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  icon: Icons.folder_open_rounded,
-                  label: 'Albums',
-                  count: '28',
-                  color: const Color(0xFFFFB300),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedSection = 0),
+                  child: _buildStatCard(
+                    icon: Icons.folder_open_rounded,
+                    label: 'Albums',
+                    count: albumsCount.toString(),
+                    color: const Color(0xFFFFB300),
+                    isSelected: _selectedSection == 0,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatCard(
-                  icon: Icons.delete_outline_rounded,
-                  label: 'Trash',
-                  count: '18',
-                  color: AppColors.textTertiary,
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedSection = 3),
+                  child: _buildStatCard(
+                    icon: Icons.delete_outline_rounded,
+                    label: 'Trash',
+                    count: trashCount.toString(),
+                    color: AppColors.textTertiary,
+                    isSelected: _selectedSection == 3,
+                  ),
                 ),
               ),
             ],
@@ -215,13 +295,27 @@ class LibraryPage extends StatelessWidget {
     required String label,
     required String count,
     required Color color,
+    required bool isSelected,
   }) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.backgroundPanel,
+        color: isSelected ? AppColors.backgroundPanel.withValues(alpha: 0.8) : AppColors.backgroundPanel,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 0.5),
+        border: Border.all(
+          color: isSelected ? color : AppColors.border,
+          width: isSelected ? 1.5 : 0.5,
+        ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : null,
       ),
       child: Row(
         children: [
@@ -264,92 +358,233 @@ class LibraryPage extends StatelessWidget {
     );
   }
 
-  /// Albums section header
-  Widget _buildAlbumsHeader() {
+  /// Section Header with dynamic controls
+  Widget _buildSectionHeader(BuildContext context) {
+    String title = 'Albums';
+    if (_selectedSection == 1) title = 'All Photos';
+    if (_selectedSection == 2) title = 'Favorites';
+    if (_selectedSection == 3) title = 'Trash';
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
       child: Row(
         children: [
           Text(
-            'Albums',
+            title,
             style: AppTypography.heading3.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
             ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: () {},
-            child: Text(
-              'See All',
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
+          if (_selectedSection == 0)
+            IconButton(
+              icon: const Icon(Icons.create_new_folder_outlined, color: AppColors.primary),
+              onPressed: () => _showCreateAlbumDialog(context),
+              tooltip: 'New Album',
             ),
-          ),
         ],
       ),
     );
   }
 
-  /// Single album list item with image thumbnail matching mockup
-  Widget _buildAlbumItem({
-    required BuildContext context,
-    required String name,
-    required int count,
-    required String imagePath,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.backgroundPanel,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border, width: 0.5),
-        ),
-        child: Row(
-          children: [
-            // Album photo thumbnail
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                image: DecorationImage(
-                  image: AssetImage(imagePath),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            // Album info
-            Expanded(
+  Widget _buildActiveSectionContent(LibraryLoaded state) {
+    if (_selectedSection == 0) {
+      if (state.albums.isEmpty) {
+        return SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Icon(Icons.folder_open_rounded, size: 64, color: Colors.white24),
+                  const SizedBox(height: 16),
                   Text(
-                    name,
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '$count',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textTertiary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    'No albums created yet',
+                    style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
+        );
+      }
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            return AlbumCard(album: state.albums[index]);
+          },
+          childCount: state.albums.length,
         ),
+      );
+    } else if (_selectedSection == 1) {
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        sliver: SliverToBoxAdapter(
+          child: PhotoGrid(
+            photos: state.allPhotos,
+            emptyMessage: 'No photos imported yet',
+          ),
+        ),
+      );
+    } else if (_selectedSection == 2) {
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        sliver: SliverToBoxAdapter(
+          child: PhotoGrid(
+            photos: state.favoritePhotos,
+            emptyMessage: 'No favorite photos yet',
+          ),
+        ),
+      );
+    } else {
+      if (state.trashPhotos.isEmpty) {
+        return SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Center(
+              child: Column(
+                children: [
+                  const Icon(Icons.delete_outline_rounded, size: 64, color: Colors.white24),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Trash is empty',
+                    style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        sliver: SliverToBoxAdapter(
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: state.trashPhotos.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
+            itemBuilder: (context, index) {
+              final photo = state.trashPhotos[index];
+              return GestureDetector(
+                onTap: () => _showTrashOptions(context, photo),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.file(
+                        File(photo.path),
+                        fit: BoxFit.cover,
+                      ),
+                      Container(
+                        color: Colors.black38,
+                        child: const Center(
+                          child: Icon(Icons.restore_from_trash_rounded, color: Colors.white70),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showTrashOptions(BuildContext context, Photo photo) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              const Text(
+                'Trash Options',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const Divider(color: Colors.white12),
+              ListTile(
+                leading: const Icon(Icons.restore_rounded, color: Colors.greenAccent),
+                title: const Text('Restore Photo', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  context.read<LibraryBloc>().add(
+                        UpdatePhotoTrash(photoId: photo.id, isTrash: false),
+                      );
+                  Navigator.pop(bottomSheetContext);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
+                title: const Text('Delete Permanently', style: TextStyle(color: Colors.redAccent)),
+                onTap: () {
+                  context.read<LibraryBloc>().add(
+                        DeletePhotoPermanentlyEvent(photoId: photo.id),
+                      );
+                  Navigator.pop(bottomSheetContext);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showCreateAlbumDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E2E),
+          title: const Text('New Album', style: TextStyle(color: Colors.white)),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Enter album name',
+              hintStyle: const TextStyle(color: Colors.white30),
+              enabledBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white24),
+              ),
+              focusedBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: AppColors.primary),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+            ),
+            TextButton(
+              onPressed: () {
+                final name = controller.text.trim();
+                if (name.isNotEmpty) {
+                  BlocProvider.of<LibraryBloc>(context).add(CreateNewAlbum(name: name));
+                }
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Create', style: TextStyle(color: AppColors.primary)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
