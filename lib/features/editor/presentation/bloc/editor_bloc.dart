@@ -41,6 +41,7 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
     on<UpdateGeometry>(_onUpdateGeometry);
     on<ResetAll>(_onResetAll);
     on<Export>(_onExport);
+    on<ApplyPreset>(_onApplyPreset);
   }
 
   Future<void> _onStartSession(
@@ -199,6 +200,8 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
       session,
       outputPath: event.outputPath,
       quality: event.quality,
+      format: event.format,
+      scale: event.scale,
     );
 
     result.fold(
@@ -208,5 +211,13 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
         exportedImagePath: path,
       )),
     );
+  }
+
+  void _onApplyPreset(ApplyPreset event, Emitter<EditorState> emit) {
+    final session = state.session;
+    if (session == null) return;
+
+    final updatedSession = session.copyWith(currentParameters: event.parameters);
+    emit(state.copyWith(session: updatedSession));
   }
 }

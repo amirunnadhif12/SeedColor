@@ -136,12 +136,26 @@ class ResetAll extends EditorEvent {
 class Export extends EditorEvent {
   final String outputPath;
   final int quality;
+  final String format;
+  final double scale;
 
   const Export({
     required this.outputPath,
     required this.quality,
+    this.format = 'jpeg',
+    this.scale = 1.0,
   });
 
   @override
-  List<Object?> get props => [outputPath, quality];
+  List<Object?> get props => [outputPath, quality, format, scale];
+}
+
+/// Menerapkan parameter preset pada sesi edit aktif
+class ApplyPreset extends EditorEvent {
+  final EditParameters parameters;
+
+  const ApplyPreset(this.parameters);
+
+  @override
+  List<Object?> get props => [parameters];
 }

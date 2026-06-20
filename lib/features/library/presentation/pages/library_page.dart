@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/utils/launch_utils.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
@@ -21,6 +23,19 @@ class LibraryPage extends StatefulWidget {
 class _LibraryPageState extends State<LibraryPage> {
   // 0: Albums, 1: All Photos, 2: Favorites, 3: Trash
   int _selectedSection = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFirstLaunch();
+  }
+
+  Future<void> _checkFirstLaunch() async {
+    final isFirst = await LaunchUtils.isFirstLaunch();
+    if (isFirst && mounted) {
+      context.go('/onboarding');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

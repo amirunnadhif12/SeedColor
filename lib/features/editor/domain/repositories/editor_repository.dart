@@ -30,5 +30,7 @@ abstract class EditorRepository {
     EditSession session, {
     required String outputPath,
     required int quality,
+    String format = 'jpeg',
+    double scale = 1.0,
   });
 }

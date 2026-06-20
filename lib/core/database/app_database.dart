@@ -39,7 +39,20 @@ class AlbumPhotosTable extends Table {
   Set<Column> get primaryKey => {albumId, photoId};
 }
 
-@DriftDatabase(tables: [PhotosTable, AlbumsTable, AlbumPhotosTable])
+@DataClassName('PresetData')
+class PresetsTable extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get category => text()(); // 'recommended', 'premium', 'yours'
+  TextColumn get parametersJson => text()();
+  BoolColumn get isBookmarked => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [PhotosTable, AlbumsTable, AlbumPhotosTable, PresetsTable])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 

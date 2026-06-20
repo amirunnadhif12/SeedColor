@@ -16,6 +16,14 @@ import '../../features/library/domain/usecases/get_albums.dart';
 import '../../features/library/domain/usecases/import_photos.dart';
 import '../../features/library/domain/usecases/manage_ratings.dart';
 import '../../features/library/presentation/bloc/library_bloc.dart';
+import '../../features/presets/data/datasources/preset_local_datasource.dart';
+import '../../features/presets/data/repositories/preset_repository_impl.dart';
+import '../../features/presets/domain/repositories/preset_repository.dart';
+import '../../features/presets/domain/usecases/manage_presets.dart';
+import '../../features/presets/presentation/bloc/presets_bloc.dart';
+import '../../features/export/domain/usecases/export_jpeg.dart';
+import '../../features/export/domain/usecases/export_png.dart';
+import '../../features/export/domain/usecases/share_image.dart';
 
 /// 🌱 SeedColor — Dependency Injection
 ///
@@ -31,6 +39,7 @@ Future<void> initDependencies() async {
   // ─── Data Sources ─────────────────────────────────────
   sl.registerLazySingleton<PhotoLocalDataSource>(() => PhotoLocalDataSourceImpl(sl()));
   sl.registerLazySingleton<AlbumLocalDataSource>(() => AlbumLocalDataSourceImpl(sl()));
+  sl.registerLazySingleton<PresetLocalDataSource>(() => PresetLocalDataSourceImpl(sl()));
 
   // ─── Repositories ─────────────────────────────────────
   sl.registerLazySingleton<EditorRepository>(() => EditorRepositoryImpl());
@@ -38,6 +47,7 @@ Future<void> initDependencies() async {
         photoDataSource: sl(),
         albumDataSource: sl(),
       ));
+  sl.registerLazySingleton<PresetRepository>(() => PresetRepositoryImpl(localDataSource: sl()));
 
   // ─── Use Cases ────────────────────────────────────────
   sl.registerLazySingleton<ApplyAdjustments>(() => ApplyAdjustments());
@@ -50,6 +60,17 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<GetAlbums>(() => GetAlbums(sl()));
   sl.registerLazySingleton<ManageRatings>(() => ManageRatings(sl()));
 
+  sl.registerLazySingleton<GetPresets>(() => GetPresets(sl()));
+  sl.registerLazySingleton<SaveCustomPreset>(() => SaveCustomPreset(sl()));
+  sl.registerLazySingleton<ImportPresetFromXmp>(() => ImportPresetFromXmp(sl()));
+  sl.registerLazySingleton<ExportPresetToXmp>(() => ExportPresetToXmp(sl()));
+  sl.registerLazySingleton<TogglePresetBookmark>(() => TogglePresetBookmark(sl()));
+  sl.registerLazySingleton<DeletePreset>(() => DeletePreset(sl()));
+
+  sl.registerLazySingleton<ExportJpeg>(() => ExportJpeg(sl()));
+  sl.registerLazySingleton<ExportPng>(() => ExportPng(sl()));
+  sl.registerLazySingleton<ShareImage>(() => const ShareImage());
+
   // ─── BLoCs ────────────────────────────────────────────
   sl.registerFactory<EditorBloc>(() => EditorBloc(
         repository: sl(),
@@ -60,4 +81,5 @@ Future<void> initDependencies() async {
         exportImage: sl(),
       ));
   sl.registerFactory<LibraryBloc>(() => LibraryBloc(repository: sl()));
+  sl.registerFactory<PresetsBloc>(() => PresetsBloc(repository: sl()));
 }

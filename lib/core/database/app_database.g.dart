@@ -952,6 +952,423 @@ class AlbumPhotosTableCompanion extends UpdateCompanion<AlbumPhotoData> {
   }
 }
 
+class $PresetsTableTable extends PresetsTable
+    with TableInfo<$PresetsTableTable, PresetData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PresetsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _parametersJsonMeta = const VerificationMeta(
+    'parametersJson',
+  );
+  @override
+  late final GeneratedColumn<String> parametersJson = GeneratedColumn<String>(
+    'parameters_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isBookmarkedMeta = const VerificationMeta(
+    'isBookmarked',
+  );
+  @override
+  late final GeneratedColumn<bool> isBookmarked = GeneratedColumn<bool>(
+    'is_bookmarked',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_bookmarked" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    category,
+    parametersJson,
+    isBookmarked,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'presets_table';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PresetData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('parameters_json')) {
+      context.handle(
+        _parametersJsonMeta,
+        parametersJson.isAcceptableOrUnknown(
+          data['parameters_json']!,
+          _parametersJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_parametersJsonMeta);
+    }
+    if (data.containsKey('is_bookmarked')) {
+      context.handle(
+        _isBookmarkedMeta,
+        isBookmarked.isAcceptableOrUnknown(
+          data['is_bookmarked']!,
+          _isBookmarkedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PresetData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PresetData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      )!,
+      parametersJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parameters_json'],
+      )!,
+      isBookmarked: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_bookmarked'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PresetsTableTable createAlias(String alias) {
+    return $PresetsTableTable(attachedDatabase, alias);
+  }
+}
+
+class PresetData extends DataClass implements Insertable<PresetData> {
+  final String id;
+  final String name;
+  final String category;
+  final String parametersJson;
+  final bool isBookmarked;
+  final DateTime createdAt;
+  const PresetData({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.parametersJson,
+    required this.isBookmarked,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['category'] = Variable<String>(category);
+    map['parameters_json'] = Variable<String>(parametersJson);
+    map['is_bookmarked'] = Variable<bool>(isBookmarked);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  PresetsTableCompanion toCompanion(bool nullToAbsent) {
+    return PresetsTableCompanion(
+      id: Value(id),
+      name: Value(name),
+      category: Value(category),
+      parametersJson: Value(parametersJson),
+      isBookmarked: Value(isBookmarked),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory PresetData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PresetData(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      category: serializer.fromJson<String>(json['category']),
+      parametersJson: serializer.fromJson<String>(json['parametersJson']),
+      isBookmarked: serializer.fromJson<bool>(json['isBookmarked']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'category': serializer.toJson<String>(category),
+      'parametersJson': serializer.toJson<String>(parametersJson),
+      'isBookmarked': serializer.toJson<bool>(isBookmarked),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  PresetData copyWith({
+    String? id,
+    String? name,
+    String? category,
+    String? parametersJson,
+    bool? isBookmarked,
+    DateTime? createdAt,
+  }) => PresetData(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    category: category ?? this.category,
+    parametersJson: parametersJson ?? this.parametersJson,
+    isBookmarked: isBookmarked ?? this.isBookmarked,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  PresetData copyWithCompanion(PresetsTableCompanion data) {
+    return PresetData(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      category: data.category.present ? data.category.value : this.category,
+      parametersJson: data.parametersJson.present
+          ? data.parametersJson.value
+          : this.parametersJson,
+      isBookmarked: data.isBookmarked.present
+          ? data.isBookmarked.value
+          : this.isBookmarked,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PresetData(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('category: $category, ')
+          ..write('parametersJson: $parametersJson, ')
+          ..write('isBookmarked: $isBookmarked, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, category, parametersJson, isBookmarked, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PresetData &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.category == this.category &&
+          other.parametersJson == this.parametersJson &&
+          other.isBookmarked == this.isBookmarked &&
+          other.createdAt == this.createdAt);
+}
+
+class PresetsTableCompanion extends UpdateCompanion<PresetData> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> category;
+  final Value<String> parametersJson;
+  final Value<bool> isBookmarked;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const PresetsTableCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.category = const Value.absent(),
+    this.parametersJson = const Value.absent(),
+    this.isBookmarked = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PresetsTableCompanion.insert({
+    required String id,
+    required String name,
+    required String category,
+    required String parametersJson,
+    this.isBookmarked = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       category = Value(category),
+       parametersJson = Value(parametersJson);
+  static Insertable<PresetData> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? category,
+    Expression<String>? parametersJson,
+    Expression<bool>? isBookmarked,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (category != null) 'category': category,
+      if (parametersJson != null) 'parameters_json': parametersJson,
+      if (isBookmarked != null) 'is_bookmarked': isBookmarked,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PresetsTableCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<String>? category,
+    Value<String>? parametersJson,
+    Value<bool>? isBookmarked,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return PresetsTableCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      parametersJson: parametersJson ?? this.parametersJson,
+      isBookmarked: isBookmarked ?? this.isBookmarked,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (parametersJson.present) {
+      map['parameters_json'] = Variable<String>(parametersJson.value);
+    }
+    if (isBookmarked.present) {
+      map['is_bookmarked'] = Variable<bool>(isBookmarked.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PresetsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('category: $category, ')
+          ..write('parametersJson: $parametersJson, ')
+          ..write('isBookmarked: $isBookmarked, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -960,6 +1377,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AlbumPhotosTableTable albumPhotosTable = $AlbumPhotosTableTable(
     this,
   );
+  late final $PresetsTableTable presetsTable = $PresetsTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -968,6 +1386,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     photosTable,
     albumsTable,
     albumPhotosTable,
+    presetsTable,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1969,6 +2388,229 @@ typedef $$AlbumPhotosTableTableProcessedTableManager =
       AlbumPhotoData,
       PrefetchHooks Function({bool albumId, bool photoId})
     >;
+typedef $$PresetsTableTableCreateCompanionBuilder =
+    PresetsTableCompanion Function({
+      required String id,
+      required String name,
+      required String category,
+      required String parametersJson,
+      Value<bool> isBookmarked,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$PresetsTableTableUpdateCompanionBuilder =
+    PresetsTableCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<String> category,
+      Value<String> parametersJson,
+      Value<bool> isBookmarked,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$PresetsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $PresetsTableTable> {
+  $$PresetsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get parametersJson => $composableBuilder(
+    column: $table.parametersJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isBookmarked => $composableBuilder(
+    column: $table.isBookmarked,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PresetsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $PresetsTableTable> {
+  $$PresetsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get parametersJson => $composableBuilder(
+    column: $table.parametersJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isBookmarked => $composableBuilder(
+    column: $table.isBookmarked,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PresetsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PresetsTableTable> {
+  $$PresetsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get parametersJson => $composableBuilder(
+    column: $table.parametersJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isBookmarked => $composableBuilder(
+    column: $table.isBookmarked,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$PresetsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PresetsTableTable,
+          PresetData,
+          $$PresetsTableTableFilterComposer,
+          $$PresetsTableTableOrderingComposer,
+          $$PresetsTableTableAnnotationComposer,
+          $$PresetsTableTableCreateCompanionBuilder,
+          $$PresetsTableTableUpdateCompanionBuilder,
+          (
+            PresetData,
+            BaseReferences<_$AppDatabase, $PresetsTableTable, PresetData>,
+          ),
+          PresetData,
+          PrefetchHooks Function()
+        > {
+  $$PresetsTableTableTableManager(_$AppDatabase db, $PresetsTableTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PresetsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PresetsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PresetsTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> category = const Value.absent(),
+                Value<String> parametersJson = const Value.absent(),
+                Value<bool> isBookmarked = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PresetsTableCompanion(
+                id: id,
+                name: name,
+                category: category,
+                parametersJson: parametersJson,
+                isBookmarked: isBookmarked,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required String category,
+                required String parametersJson,
+                Value<bool> isBookmarked = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PresetsTableCompanion.insert(
+                id: id,
+                name: name,
+                category: category,
+                parametersJson: parametersJson,
+                isBookmarked: isBookmarked,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PresetsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PresetsTableTable,
+      PresetData,
+      $$PresetsTableTableFilterComposer,
+      $$PresetsTableTableOrderingComposer,
+      $$PresetsTableTableAnnotationComposer,
+      $$PresetsTableTableCreateCompanionBuilder,
+      $$PresetsTableTableUpdateCompanionBuilder,
+      (
+        PresetData,
+        BaseReferences<_$AppDatabase, $PresetsTableTable, PresetData>,
+      ),
+      PresetData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1979,4 +2621,6 @@ class $AppDatabaseManager {
       $$AlbumsTableTableTableManager(_db, _db.albumsTable);
   $$AlbumPhotosTableTableTableManager get albumPhotosTable =>
       $$AlbumPhotosTableTableTableManager(_db, _db.albumPhotosTable);
+  $$PresetsTableTableTableManager get presetsTable =>
+      $$PresetsTableTableTableManager(_db, _db.presetsTable);
 }

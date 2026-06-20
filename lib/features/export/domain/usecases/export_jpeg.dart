@@ -1,29 +1,27 @@
 import '../../../../core/errors/either.dart';
 import '../../../../core/errors/failures.dart';
-import '../entities/edit_session.dart';
-import '../repositories/editor_repository.dart';
+import '../../../editor/domain/entities/edit_session.dart';
+import '../../../editor/domain/repositories/editor_repository.dart';
 
-/// 🌱 SeedColor — Export Image Use Case
+/// 🌱 SeedColor — Export JPEG Use Case
 ///
-/// Use case untuk mengekspor gambar final beresolusi penuh
-/// dengan memanggil EditorRepository.
-class ExportImage {
+/// Use case untuk mengekspor gambar ke format JPEG dengan kualitas tertentu.
+class ExportJpeg {
   final EditorRepository repository;
 
-  const ExportImage(this.repository);
+  const ExportJpeg(this.repository);
 
   Future<Either<Failure, String>> call(
     EditSession session, {
     required String outputPath,
     required int quality,
-    String format = 'jpeg',
-    double scale = 1.0,
+    required double scale,
   }) {
     return repository.exportImage(
       session,
       outputPath: outputPath,
       quality: quality,
-      format: format,
+      format: 'jpeg',
       scale: scale,
     );
   }

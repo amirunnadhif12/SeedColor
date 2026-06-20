@@ -28,6 +28,8 @@ import '../widgets/panels/color_grading_panel.dart';
 import '../widgets/panels/detail_panel.dart';
 import '../widgets/panels/optics_panel.dart';
 import '../widgets/panels/geometry_panel.dart';
+import '../widgets/panels/presets_panel.dart';
+import '../../../export/presentation/widgets/export_dialog.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../../core/database/app_database.dart';
 import '../widgets/crop/crop_overlay.dart';
@@ -134,6 +136,7 @@ class _EditorPageState extends State<EditorPage>
   int _rating = 0;
 
   final List<ToolItem> _tools = [
+    const ToolItem(Icons.style_rounded, 'Presets', Color(0xFF00E6FF)),
     const ToolItem(Icons.wb_sunny_rounded, 'Light', AppColors.toolLight),
     const ToolItem(Icons.palette_rounded, 'Color', AppColors.toolColor),
     const ToolItem(Icons.auto_awesome_rounded, 'Effects', AppColors.toolEffects),
@@ -223,23 +226,19 @@ class _EditorPageState extends State<EditorPage>
   String _aspectRatio = 'Bebas';
 
   Map<String, double> get _currentValues {
-    switch (_selectedToolIndex) {
-      case 0:
+    switch (_currentToolLabel) {
+      case 'Light':
         return _lightValues;
-      case 1:
+      case 'Color':
         return _colorValues;
-      case 2:
+      case 'Effects':
         return _effectsValues;
-      case 3:
+      case 'Detail':
         return _detailValues;
-      case 4:
-        return {};
-      case 5:
-        return {};
-      case 6:
+      case 'Masking':
         return _maskingValues;
       default:
-        return _lightValues;
+        return {};
     }
   }
 
@@ -473,7 +472,7 @@ class _EditorPageState extends State<EditorPage>
                       Positioned.fill(
                         child: _buildImagePreview(),
                       ),
-                      if (_selectedToolIndex == 6) _buildMaskingSidebar(),
+                      if (_currentToolLabel == 'Masking') _buildMaskingSidebar(),
                     ],
                   ),
                 ),
@@ -496,7 +495,7 @@ class _EditorPageState extends State<EditorPage>
 
   /// Conditional top bar matching Light vs Masking layout
   Widget _buildTopBar(EditorState state) {
-    if (_selectedToolIndex == 6) {
+    if (_currentToolLabel == 'Masking') {
       // Masking Top Bar (Mockup Screen 3)
       return Container(
         height: 48,
@@ -508,7 +507,7 @@ class _EditorPageState extends State<EditorPage>
               color: AppColors.textPrimary,
               onPressed: () {
                 setState(() {
-                  _selectedToolIndex = 0; // Go back to Light
+                  _selectedToolIndex = _tools.indexWhere((t) => t.label == 'Light'); // Go back to Light
                 });
               },
               tooltip: 'Cancel',
@@ -528,7 +527,7 @@ class _EditorPageState extends State<EditorPage>
               color: AppColors.textPrimary,
               onPressed: () {
                 setState(() {
-                  _selectedToolIndex = 0; // Confirm & go back
+                  _selectedToolIndex = _tools.indexWhere((t) => t.label == 'Light'); // Confirm & go back
                 });
               },
               tooltip: 'Apply',
@@ -615,10 +614,13 @@ class _EditorPageState extends State<EditorPage>
             color: AppColors.textPrimary,
             onPressed: () {
               if (state.session != null) {
-                bloc.add(const Export(
-                  outputPath: '/storage/emulated/0/Download/SeedColor_export.jpg',
-                  quality: 90,
-                ));
+                showDialog(
+                  context: context,
+                  builder: (dialogContext) => BlocProvider.value(
+                    value: context.read<EditorBloc>(),
+                    child: ExportDialog(session: state.session!),
+                  ),
+                );
               }
             },
             tooltip: 'Export',
@@ -811,29 +813,29 @@ class _EditorPageState extends State<EditorPage>
     }
 
     // Load masked hiker image if masking is active (Screen 3)
-    final imageToRender = (_selectedToolIndex == 6) ? (_maskedImage ?? _testImage!) : _testImage!;
+    final imageToRender = (_currentToolLabel == 'Masking') ? (_maskedImage ?? _testImage!) : _testImage!;
 
     final canvasWidget = ImageCanvas(
       image: imageToRender,
       lutImage: _lutImage!,
       shader: _shader!,
       // Dynamically select values depending on tool
-      exposure: _selectedToolIndex == 6
+      exposure: _currentToolLabel == 'Masking'
           ? (_maskingValues['Exposure'] ?? 0.0)
           : (_lightValues['Exposure'] ?? 0.0),
-      contrast: _selectedToolIndex == 6
+      contrast: _currentToolLabel == 'Masking'
           ? (_maskingValues['Contrast'] ?? 0.0)
           : (_lightValues['Contrast'] ?? 0.0),
-      highlights: _selectedToolIndex == 6 ? 0.0 : (_lightValues['Highlights'] ?? 0.0),
-      shadows: _selectedToolIndex == 6
+      highlights: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Highlights'] ?? 0.0),
+      shadows: _currentToolLabel == 'Masking'
           ? (_maskingValues['Shadows'] ?? 0.0)
           : (_lightValues['Shadows'] ?? 0.0),
-      whites: _selectedToolIndex == 6 ? 0.0 : (_lightValues['Whites'] ?? 0.0),
-      blacks: _selectedToolIndex == 6 ? 0.0 : (_lightValues['Blacks'] ?? 0.0),
+      whites: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Whites'] ?? 0.0),
+      blacks: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Blacks'] ?? 0.0),
       temperature: _colorValues['Temperature'] ?? 0.0,
       tint: _colorValues['Tint'] ?? 0.0,
       vibrance: _colorValues['Vibrance'] ?? 0.0,
-      saturation: _selectedToolIndex == 6
+      saturation: _currentToolLabel == 'Masking'
           ? (_maskingValues['Saturation'] ?? 0.0)
           : (_colorValues['Saturation'] ?? 0.0),
       hslAdjustments: _hslAdjustments,
@@ -872,7 +874,7 @@ class _EditorPageState extends State<EditorPage>
       child: canvasWidget,
     );
 
-    if (_selectedToolIndex == 5) {
+    if (_currentToolLabel == 'Geometry') {
       // In geometry editing mode, show the full transformed image with CropOverlay on top
       return Stack(
         children: [
@@ -920,7 +922,7 @@ class _EditorPageState extends State<EditorPage>
       child: Row(
         children: [
           Text(
-            _selectedToolIndex == 6
+            _currentToolLabel == 'Masking'
                 ? 'Subject'
                 : _showCurves
                     ? 'Curves'
@@ -935,7 +937,7 @@ class _EditorPageState extends State<EditorPage>
             ),
           ),
           const Spacer(),
-          if (_selectedToolIndex == 0) ...[
+          if (_currentToolLabel == 'Light') ...[
             // Curve Chip Button (Mockup Screen 2)
             GestureDetector(
               onTap: () {
@@ -975,7 +977,7 @@ class _EditorPageState extends State<EditorPage>
                 ),
               ),
             ),
-          ] else if (_selectedToolIndex == 6) ...[
+          ] else if (_currentToolLabel == 'Masking') ...[
             // Masking options icons (Mockup Screen 3)
             IconButton(
               icon: const Icon(Icons.delete_outline_rounded, size: 20),
@@ -1005,7 +1007,7 @@ class _EditorPageState extends State<EditorPage>
     );
   }
 
-  /// Penampung slider penyesuaian modular
+  /// Penampung slider penyesuaian modular dengan animasi transisi
   Widget _buildAdjustmentSliders(EditorState state) {
     if (state.session == null) {
       return const SizedBox(
@@ -1017,9 +1019,34 @@ class _EditorPageState extends State<EditorPage>
     }
 
     final params = state.session!.currentParameters;
+    final panelContent = _buildPanelContent(params);
 
-    switch (_selectedToolIndex) {
-      case 0:
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.0, 0.08),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey<String>(_currentToolLabel + (_showCurves ? '_curves' : _showHslMixer ? '_hsl' : _showColorGrading ? '_cg' : '')),
+        child: panelContent,
+      ),
+    );
+  }
+
+  Widget _buildPanelContent(EditParameters params) {
+    switch (_currentToolLabel) {
+      case 'Presets':
+        return PresetsPanel(currentParameters: params);
+      case 'Light':
         // Curves Panel atau Light Panel utama
         if (_showCurves) {
           return CurvesPanel(
@@ -1084,7 +1111,7 @@ class _EditorPageState extends State<EditorPage>
             context.read<EditorBloc>().add(UpdateLight(updated));
           },
         );
-      case 1:
+      case 'Color':
         // HSL Mixer Panel atau Color Panel utama
         if (_showHslMixer) {
           return HslPanel(
@@ -1185,7 +1212,7 @@ class _EditorPageState extends State<EditorPage>
           },
         );
 
-      case 2:
+      case 'Effects':
         return EffectsPanel(
           parameters: params.copyWith(
             texture: _effectsValues['Texture'] ?? params.texture,
@@ -1211,7 +1238,7 @@ class _EditorPageState extends State<EditorPage>
           },
         );
 
-      case 3:
+      case 'Detail':
         return DetailPanel(
           parameters: params.copyWith(
             sharpeningAmount: _detailValues['Sharpening'] ?? params.sharpeningAmount,
@@ -1239,7 +1266,7 @@ class _EditorPageState extends State<EditorPage>
           },
         );
 
-      case 4:
+      case 'Optics':
         return OpticsPanel(
           parameters: params.copyWith(
             removeChromaticAberration: _removeChromaticAberration,
@@ -1261,7 +1288,7 @@ class _EditorPageState extends State<EditorPage>
           },
         );
 
-      case 5:
+      case 'Geometry':
         return GeometryPanel(
           parameters: params,
           onChanged: (updated) {

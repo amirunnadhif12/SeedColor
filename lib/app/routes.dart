@@ -6,6 +6,8 @@ import '../features/library/presentation/pages/album_detail_page.dart';
 import '../features/presets/presentation/pages/preset_browser_page.dart';
 import '../features/editor/presentation/pages/editor_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
+import '../features/onboarding/presentation/pages/splash_page.dart';
+import '../features/onboarding/presentation/pages/onboarding_page.dart';
 
 /// 🌱 SeedColor — Router Configuration
 ///
@@ -21,14 +23,26 @@ class AppRoutes {
   static const String edit = '/edit';
   static const String profile = '/profile';
   static const String editor = '/editor';
+  static const String splash = '/';
+  static const String onboarding = '/onboarding';
 
   // ─── Navigation Key ──────────────────────────────────
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: library,
+    initialLocation: splash,
     routes: [
+      GoRoute(
+        path: splash,
+        name: 'splash',
+        builder: (context, state) => const SplashPage(),
+      ),
+      GoRoute(
+        path: onboarding,
+        name: 'onboarding',
+        builder: (context, state) => const OnboardingPage(),
+      ),
       // ─── ShellRoute: Bottom Navigation ──────────────
       // Membungkus 4 tab utama agar bottom nav tetap
       // persistent saat navigasi antar tab.

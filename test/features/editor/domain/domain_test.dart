@@ -23,6 +23,8 @@ class MockEditorRepository implements EditorRepository {
     EditSession session, {
     required String outputPath,
     required int quality,
+    String format = 'jpeg',
+    double scale = 1.0,
   }) async {
     exportImageCalled = true;
     lastExportedSession = session;
