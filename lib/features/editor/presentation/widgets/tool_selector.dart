@@ -38,53 +38,57 @@ class ToolSelector extends StatelessWidget {
           top: BorderSide(color: AppColors.border, width: 0.5),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(tools.length, (index) {
-          final tool = tools[index];
-          final isSelected = index == selectedIndex;
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          children: List.generate(tools.length, (index) {
+            final tool = tools[index];
+            final isSelected = index == selectedIndex;
 
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              onToolSelected(index);
-            },
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 56,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onToolSelected(index);
+              },
+              behavior: HitTestBehavior.opaque,
+              child: SizedBox(
+                width: 60,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.15)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        tool.icon,
+                        size: 20,
+                        color:
+                            isSelected ? AppColors.primary : AppColors.textTertiary,
+                      ),
                     ),
-                    child: Icon(
-                      tool.icon,
-                      size: 20,
-                      color:
-                          isSelected ? AppColors.primary : AppColors.textTertiary,
+                    const SizedBox(height: 2),
+                    Text(
+                      tool.label,
+                      style: AppTypography.toolLabel.copyWith(
+                        color:
+                            isSelected ? AppColors.primary : AppColors.textTertiary,
+                        fontSize: 9,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    tool.label,
-                    style: AppTypography.toolLabel.copyWith(
-                      color:
-                          isSelected ? AppColors.primary : AppColors.textTertiary,
-                      fontSize: 9,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }

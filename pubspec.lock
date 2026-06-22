@@ -234,7 +234,7 @@ packages:
     source: hosted
     version: "1.3.3"
   ffi:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: ffi
       sha256: "6d7fd89431262d8f3125e81b50d3847a091d846eafcd4fdb88dd06f36d705a45"
@@ -302,6 +302,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.1.1"
+  flutter_libraw:
+    dependency: "direct main"
+    description:
+      name: flutter_libraw
+      sha256: "97df5812e3533abebbd33bdea6cebc5917cc1c1971682f82c016d4452a92d6f6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.2"
   flutter_lints:
     dependency: "direct dev"
     description:

@@ -126,7 +126,7 @@ class AppRoutes {
           final photoId = state.pathParameters['photoId'] ?? '';
           return CustomTransitionPage(
             key: state.pageKey,
-            child: EditorScreen(photoId: photoId),
+            child: EditorScreen(photoId: photoId, isStandalone: true),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
               return SlideTransition(

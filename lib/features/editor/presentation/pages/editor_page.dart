@@ -40,8 +40,13 @@ import '../widgets/crop/crop_overlay.dart';
 /// dan memulai sesi pengeditan baru.
 class EditorScreen extends StatelessWidget {
   final String photoId;
+  final bool isStandalone;
 
-  const EditorScreen({super.key, required this.photoId});
+  const EditorScreen({
+    super.key,
+    required this.photoId,
+    this.isStandalone = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +57,7 @@ class EditorScreen extends StatelessWidget {
             photoId: 'sample',
             imagePath: 'assets/images/mountain_lake.png',
           )),
-        child: const EditorPage(photoId: 'sample'),
+        child: EditorPage(photoId: 'sample', isStandalone: isStandalone),
       );
     }
 
@@ -100,7 +105,7 @@ class EditorScreen extends StatelessWidget {
               photoId: photoId,
               imagePath: photoPath,
             )),
-          child: EditorPage(photoId: photoId),
+          child: EditorPage(photoId: photoId, isStandalone: isStandalone),
         );
       },
     );
@@ -112,8 +117,13 @@ class EditorScreen extends StatelessWidget {
 /// Refactored Editor Screen to support dynamic Light, Color, HSL & Curves panels with EditorBloc.
 class EditorPage extends StatefulWidget {
   final String photoId;
+  final bool isStandalone;
 
-  const EditorPage({super.key, required this.photoId});
+  const EditorPage({
+    super.key,
+    required this.photoId,
+    this.isStandalone = false,
+  });
 
   @override
   State<EditorPage> createState() => _EditorPageState();
@@ -481,7 +491,9 @@ class _EditorPageState extends State<EditorPage>
                 _buildPanelHeader(state),
 
                 // ─── Adjustment Sliders ───────────────────────
-                _buildAdjustmentSliders(state),
+                Flexible(
+                  child: _buildAdjustmentSliders(state),
+                ),
 
                 // ─── Tool Selector Bar ────────────────────────
                 _buildToolSelector(),
@@ -545,12 +557,15 @@ class _EditorPageState extends State<EditorPage>
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, size: 22),
-            color: AppColors.textPrimary,
-            onPressed: () => Navigator.of(context).maybePop(),
-            tooltip: 'Back',
-          ),
+          if (widget.isStandalone)
+            IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, size: 22),
+              color: AppColors.textPrimary,
+              onPressed: () => Navigator.of(context).maybePop(),
+              tooltip: 'Back',
+            )
+          else
+            const SizedBox(width: 8),
           const Spacer(),
           // Favorite button (only for real photos, not sample)
           if (widget.photoId != 'sample' && widget.photoId.isNotEmpty) ...[
@@ -1010,9 +1025,9 @@ class _EditorPageState extends State<EditorPage>
   /// Penampung slider penyesuaian modular dengan animasi transisi
   Widget _buildAdjustmentSliders(EditorState state) {
     if (state.session == null) {
-      return const SizedBox(
-        height: 220,
-        child: Center(
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 220),
+        child: const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       );

@@ -59,54 +59,59 @@ class _PresetsPanelState extends State<PresetsPanel> with SingleTickerProviderSt
           }
 
           if (state is PresetsLoaded) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Top controls: Category Tabs + Save button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TabBar(
-                          controller: _tabController,
-                          labelColor: AppColors.textPrimary,
-                          unselectedLabelColor: AppColors.textTertiary,
-                          indicatorColor: AppColors.primary,
-                          indicatorWeight: 2,
-                          dividerColor: Colors.transparent,
-                          labelStyle: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.bold),
-                          tabs: const [
-                            Tab(text: 'Recommended'),
-                            Tab(text: 'Premium'),
-                            Tab(text: 'Yours'),
-                          ],
+            return ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Top controls: Category Tabs + Save button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TabBar(
+                            controller: _tabController,
+                            labelColor: AppColors.textPrimary,
+                            unselectedLabelColor: AppColors.textTertiary,
+                            indicatorColor: AppColors.primary,
+                            indicatorWeight: 2,
+                            dividerColor: Colors.transparent,
+                            labelStyle: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.bold),
+                            tabs: const [
+                              Tab(text: 'Recommended'),
+                              Tab(text: 'Premium'),
+                              Tab(text: 'Yours'),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Save Preset Button
-                      IconButton(
-                        icon: const Icon(Icons.bookmark_add_rounded, color: AppColors.primary),
-                        onPressed: () => _showSavePresetDialog(context),
-                        tooltip: 'Save Custom Preset',
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        // Save Preset Button
+                        IconButton(
+                          icon: const Icon(Icons.bookmark_add_rounded, color: AppColors.primary),
+                          onPressed: () => _showSavePresetDialog(context),
+                          tooltip: 'Save Custom Preset',
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                // Horizontal list of presets
-                SizedBox(
-                  height: 110,
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildPresetList(context, state.recommended),
-                      _buildPresetList(context, state.premium),
-                      _buildPresetList(context, state.yours, isYours: true),
-                    ],
+                  const SizedBox(height: 12),
+                  // Horizontal list of presets
+                  Flexible(
+                    child: SizedBox(
+                      height: 110,
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildPresetList(context, state.recommended),
+                          _buildPresetList(context, state.premium),
+                          _buildPresetList(context, state.yours, isYours: true),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           }
 

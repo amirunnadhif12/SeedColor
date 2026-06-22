@@ -3,7 +3,7 @@
 **SeedColor by DevSeed Studio**
 
 > Aplikasi koreksi warna dan color grading profesional untuk Android — terinspirasi Adobe Lightroom Mobile.
-> **Status**: 🎨 UI Redesign ke Brand Biru (#0A84FF), Bottom Navigation 4-Tab, integrasi BLoC dengan Panel Light & Color (Step 7), Panel HSL Color Mixer (Step 8), Panel Curves (Step 9), serta Panel Effects & Color Grading (Step 10) telah selesai diimplementasikan.
+> **Status**: 🎨 UI Redesign ke Brand Biru (#0A84FF), Bottom Navigation 4-Tab, integrasi BLoC dengan Panel Light & Color (Step 7), Panel HSL Color Mixer (Step 8), Panel Curves (Step 9), serta Panel Effects & Color Grading (Step 10) telah selesai diimplementasikan. Saat ini sedang mengembangkan fitur Sebelum/Sesudah (Before/After Compare - Step 19).
 
 ---
 
@@ -758,9 +758,9 @@ lib/features/library/
 **Apa yang dikerjakan:**
 - [x] Buat `PresetBrowserPage` — Grid preset dengan tab: Recommended, Premium, Yours
 - [x] Buat `PresetCard` — Card preset dengan gradient thumbnail, bookmark overlay, dan nama preset
-- [ ] Buat 15-20 built-in presets (data mock sudah dibuat di UI)
-- [ ] Save custom preset dari current adjustments
-- [ ] Import/Export preset format `.xmp` (kompatibel Lightroom)
+- [x] Buat 15-20 built-in presets (data mock sudah dibuat di UI)
+- [x] Save custom preset dari current adjustments
+- [x] Import/Export preset format `.xmp` (kompatibel Lightroom)
 - [x] Preset browser dengan preview thumbnails (menggunakan visual card gradient)
 - [x] Category filter (tab bar Recommended/Premium/Yours)
 
@@ -796,12 +796,12 @@ lib/features/presets/
 #### 🔹 Step 15: Export System (Minggu 13-14)
 
 **Apa yang dikerjakan:**
-- [ ] Buat `ExportDialog` — pilihan format, kualitas, ukuran
-- [ ] Export JPEG dengan kualitas adjustable (0-100%)
-- [ ] Export PNG (lossless)
-- [ ] Full-resolution processing via OpenCV (bukan shader preview)
-- [ ] Share ke aplikasi lain (WhatsApp, Instagram, dll)
-- [ ] Progress indicator saat export
+- [x] Buat `ExportDialog` — pilihan format, kualitas, ukuran
+- [x] Export JPEG dengan kualitas adjustable (0-100%)
+- [x] Export PNG (lossless)
+- [x] Full-resolution processing via GPU off-screen (bukan shader preview)
+- [x] Share ke aplikasi lain (WhatsApp, Instagram, dll)
+- [x] Progress indicator saat export
 
 **File yang dibuat:**
 ```
@@ -821,16 +821,16 @@ lib/features/export/
 #### 🔹 Step 16: Polish & Testing (Minggu 14-16)
 
 **Apa yang dikerjakan:**
-- [ ] UI polish — animasi transisi antar panel
-- [ ] Loading states & error handling
-- [ ] Onboarding screen (first launch)
-- [ ] App icon & splash screen (branding SeedColor 🌱)
-- [ ] Performance profiling (target <16ms frame time)
-- [ ] Memory optimization (target <300MB untuk 20MP foto)
-- [ ] Unit tests untuk semua domain entities
-- [ ] Widget tests untuk core widgets
-- [ ] Integration test: import → edit → export flow
-- [ ] Bug fixing & stability
+- [x] UI polish — animasi transisi antar panel
+- [x] Loading states & error handling
+- [x] Onboarding screen (first launch)
+- [x] App icon & splash screen (branding SeedColor 🌱)
+- [x] Performance profiling (target <16ms frame time)
+- [x] Memory optimization (target <300MB untuk 20MP foto)
+- [x] Unit tests untuk semua domain entities
+- [x] Widget tests untuk core widgets
+- [x] Integration test: import → edit → export flow
+- [x] Bug fixing & stability
 
 **Cara verifikasi akhir MVP:**
 ```bash
@@ -848,7 +848,7 @@ flutter install                  # Install ke device
 
 - [ ] **Step 17:** RAW Processing — Import DNG/CR2/NEF/ARW via LibRaw FFI
 - [ ] **Step 18:** History Panel — Full list semua edit steps + named snapshots
-- [ ] **Step 19:** Before/After Compare — Swipe slider untuk compare
+- [/] **Step 19:** Before/After Compare — Swipe slider untuk compare
 - [ ] **Step 20:** Batch Editing — Apply preset/adjustments ke banyak foto sekaligus
 - [ ] **Step 21:** LUT Support — Import & apply .cube dan .3dl files
 - [ ] **Step 22:** Keyword Tagging — Search & filter foto by keyword
