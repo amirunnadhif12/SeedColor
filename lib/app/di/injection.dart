@@ -24,6 +24,7 @@ import '../../features/presets/presentation/bloc/presets_bloc.dart';
 import '../../features/export/domain/usecases/export_jpeg.dart';
 import '../../features/export/domain/usecases/export_png.dart';
 import '../../features/export/domain/usecases/share_image.dart';
+import '../../features/editor/data/datasources/raw_datasource.dart';
 
 /// 🌱 SeedColor — Dependency Injection
 ///
@@ -40,12 +41,14 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<PhotoLocalDataSource>(() => PhotoLocalDataSourceImpl(sl()));
   sl.registerLazySingleton<AlbumLocalDataSource>(() => AlbumLocalDataSourceImpl(sl()));
   sl.registerLazySingleton<PresetLocalDataSource>(() => PresetLocalDataSourceImpl(sl()));
+  sl.registerLazySingleton<RawDatasource>(() => RawDatasource());
 
   // ─── Repositories ─────────────────────────────────────
   sl.registerLazySingleton<EditorRepository>(() => EditorRepositoryImpl());
   sl.registerLazySingleton<LibraryRepository>(() => LibraryRepositoryImpl(
         photoDataSource: sl(),
         albumDataSource: sl(),
+        rawDatasource: sl(),
       ));
   sl.registerLazySingleton<PresetRepository>(() => PresetRepositoryImpl(localDataSource: sl()));
 

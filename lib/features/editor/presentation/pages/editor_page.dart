@@ -29,6 +29,7 @@ import '../widgets/panels/detail_panel.dart';
 import '../widgets/panels/optics_panel.dart';
 import '../widgets/panels/geometry_panel.dart';
 import '../widgets/panels/presets_panel.dart';
+import '../widgets/panels/history_panel.dart';
 import '../../../export/presentation/widgets/export_dialog.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../../core/database/app_database.dart';
@@ -154,6 +155,7 @@ class _EditorPageState extends State<EditorPage>
     const ToolItem(Icons.camera_rounded, 'Optics', Color(0xFFBC8CFF)),
     const ToolItem(Icons.crop_rounded, 'Geometry', AppColors.toolGeometry),
     const ToolItem(Icons.layers_rounded, 'Masking', AppColors.toolMasking),
+    const ToolItem(Icons.history_rounded, 'Riwayat', Color(0xFFFF9500)),
   ];
 
   // ─── Light Panel Sliders (Preset to Mockup Values) ──────
@@ -272,7 +274,15 @@ class _EditorPageState extends State<EditorPage>
               ..where((t) => t.id.equals(widget.photoId)))
             .getSingleOrNull();
         if (dbPhoto != null) {
-          final file = File(dbPhoto.path);
+          final pathLower = dbPhoto.path.toLowerCase();
+          final isRaw = pathLower.endsWith('.dng') ||
+              pathLower.endsWith('.cr2') ||
+              pathLower.endsWith('.nef') ||
+              pathLower.endsWith('.arw');
+          final pathToLoad = (isRaw && dbPhoto.thumbnailPath != null)
+              ? dbPhoto.thumbnailPath!
+              : dbPhoto.path;
+          final file = File(pathToLoad);
           list = await file.readAsBytes();
           _isFavorite = dbPhoto.isFavorite;
           _rating = dbPhoto.rating;
@@ -1034,7 +1044,7 @@ class _EditorPageState extends State<EditorPage>
     }
 
     final params = state.session!.currentParameters;
-    final panelContent = _buildPanelContent(params);
+    final panelContent = _buildPanelContent(state, params);
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 250),
@@ -1057,10 +1067,28 @@ class _EditorPageState extends State<EditorPage>
     );
   }
 
-  Widget _buildPanelContent(EditParameters params) {
+  Widget _buildPanelContent(EditorState state, EditParameters params) {
     switch (_currentToolLabel) {
       case 'Presets':
         return PresetsPanel(currentParameters: params);
+      case 'Riwayat':
+        return HistoryPanel(
+          history: state.history,
+          currentHistoryIndex: state.currentHistoryIndex,
+          snapshots: state.snapshots,
+          onStepSelected: (index) {
+            context.read<EditorBloc>().add(NavigateHistory(index));
+          },
+          onCreateSnapshot: (name) {
+            context.read<EditorBloc>().add(CreateSnapshot(name));
+          },
+          onApplySnapshot: (snapshot) {
+            context.read<EditorBloc>().add(ApplySnapshot(snapshot));
+          },
+          onDeleteSnapshot: (snapshotId) {
+            context.read<EditorBloc>().add(DeleteSnapshot(snapshotId));
+          },
+        );
       case 'Light':
         // Curves Panel atau Light Panel utama
         if (_showCurves) {

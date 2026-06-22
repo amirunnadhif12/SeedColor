@@ -13,6 +13,8 @@ import '../../domain/entities/curve_data.dart';
 import '../../domain/entities/edit_parameters.dart';
 import '../../domain/entities/edit_session.dart';
 import '../../domain/repositories/editor_repository.dart';
+import '../../../../app/di/injection.dart';
+import '../../../../core/database/app_database.dart';
 
 /// 🌱 SeedColor — Editor Repository Implementation
 ///
@@ -105,9 +107,30 @@ class EditorRepositoryImpl implements EditorRepository {
         final ByteData data = await rootBundle.load('assets/images/mountain_lake.png');
         originalBytes = data.buffer.asUint8List();
       } else {
-        final file = File(session.imagePath);
+        final pathLower = session.imagePath.toLowerCase();
+        final isRaw = pathLower.endsWith('.dng') ||
+            pathLower.endsWith('.cr2') ||
+            pathLower.endsWith('.nef') ||
+            pathLower.endsWith('.arw');
+
+        String pathToLoad = session.imagePath;
+        if (isRaw) {
+          try {
+            final db = sl<AppDatabase>();
+            final dbPhoto = await (db.select(db.photosTable)
+                  ..where((t) => t.id.equals(session.photoId)))
+                .getSingleOrNull();
+            if (dbPhoto != null && dbPhoto.thumbnailPath != null) {
+              pathToLoad = dbPhoto.thumbnailPath!;
+            }
+          } catch (e) {
+            debugPrint('Gagal membaca database saat mengekspor RAW: $e');
+          }
+        }
+
+        final file = File(pathToLoad);
         if (!await file.exists()) {
-          return Left(StorageFailure('Berkas asli tidak ditemukan di ${session.imagePath}'));
+          return Left(StorageFailure('Berkas asli tidak ditemukan di $pathToLoad'));
         }
         originalBytes = await file.readAsBytes();
       }

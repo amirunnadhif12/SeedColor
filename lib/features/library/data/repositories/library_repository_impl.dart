@@ -8,15 +8,18 @@ import '../../domain/repositories/library_repository.dart';
 import '../datasources/photo_local_datasource.dart';
 import '../datasources/album_local_datasource.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../editor/data/datasources/raw_datasource.dart';
 
 class LibraryRepositoryImpl implements LibraryRepository {
   final PhotoLocalDataSource photoDataSource;
   final AlbumLocalDataSource albumDataSource;
+  final RawDatasource rawDatasource;
   final _uuid = const Uuid();
 
   LibraryRepositoryImpl({
     required this.photoDataSource,
     required this.albumDataSource,
+    required this.rawDatasource,
   });
 
   @override
@@ -55,10 +58,35 @@ class LibraryRepositoryImpl implements LibraryRepository {
     await srcFile.copy(targetPath);
 
     final now = DateTime.now();
+
+    // Check if RAW file extension
+    final extLower = fileExtension.toLowerCase();
+    final isRaw = extLower == '.dng' ||
+        extLower == '.cr2' ||
+        extLower == '.nef' ||
+        extLower == '.arw';
+
+    String thumbnailPath = targetPath;
+    if (isRaw) {
+      try {
+        final metadata = await rawDatasource.extractMetadataAndThumbnail(targetPath);
+        if (metadata != null && metadata.thumbnailBytes.isNotEmpty) {
+          final thumbFileName = '${photoId}_thumb.jpg';
+          final thumbPath = p.join(photosDir.path, thumbFileName);
+          final thumbFile = File(thumbPath);
+          await thumbFile.writeAsBytes(metadata.thumbnailBytes);
+          thumbnailPath = thumbPath;
+        }
+      } catch (e) {
+        // Fallback to targetPath if thumbnail extraction fails
+        thumbnailPath = targetPath;
+      }
+    }
+
     final photoData = PhotoData(
       id: photoId,
       path: targetPath,
-      thumbnailPath: targetPath, // Use same path for simplicity
+      thumbnailPath: thumbnailPath,
       rating: 0,
       isFavorite: false,
       isTrash: false,

@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:replay_bloc/replay_bloc.dart';
 import '../../domain/entities/edit_parameters.dart';
 import '../../domain/entities/hsl_adjustments.dart';
+import 'editor_state.dart';
 
 /// 🌱 SeedColor — Editor Events
 ///
@@ -158,4 +159,44 @@ class ApplyPreset extends EditorEvent {
 
   @override
   List<Object?> get props => [parameters];
+}
+
+/// Navigasi ke indeks riwayat edit tertentu
+class NavigateHistory extends EditorEvent {
+  final int index;
+
+  const NavigateHistory(this.index);
+
+  @override
+  List<Object?> get props => [index];
+}
+
+/// Membuat snapshot baru dengan nama kustom
+class CreateSnapshot extends EditorEvent {
+  final String name;
+
+  const CreateSnapshot(this.name);
+
+  @override
+  List<Object?> get props => [name];
+}
+
+/// Menerapkan pengaturan dari snapshot kustom
+class ApplySnapshot extends EditorEvent {
+  final NamedSnapshot snapshot;
+
+  const ApplySnapshot(this.snapshot);
+
+  @override
+  List<Object?> get props => [snapshot];
+}
+
+/// Menghapus snapshot kustom berdasarkan ID
+class DeleteSnapshot extends EditorEvent {
+  final String id;
+
+  const DeleteSnapshot(this.id);
+
+  @override
+  List<Object?> get props => [id];
 }

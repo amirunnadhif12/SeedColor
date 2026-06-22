@@ -3,7 +3,7 @@
 **SeedColor by DevSeed Studio**
 
 > Aplikasi koreksi warna dan color grading profesional untuk Android — terinspirasi Adobe Lightroom Mobile.
-> **Status**: 🎨 UI Redesign ke Brand Biru (#0A84FF), Bottom Navigation 4-Tab, integrasi BLoC dengan Panel Light & Color (Step 7), Panel HSL Color Mixer (Step 8), Panel Curves (Step 9), serta Panel Effects & Color Grading (Step 10) telah selesai diimplementasikan. Saat ini sedang mengembangkan fitur Sebelum/Sesudah (Before/After Compare - Step 19).
+> **Status**: 🎨 UI Redesign ke Brand Biru (#0A84FF), Bottom Navigation 4-Tab, integrasi BLoC dengan Panel Light & Color (Step 7), Panel HSL Color Mixer (Step 8), Panel Curves (Step 9), Panel Effects & Color Grading (Step 10), serta Dukungan RAW Processing (Step 17) telah selesai diimplementasikan.
 
 ---
 
@@ -846,9 +846,9 @@ flutter install                  # Install ke device
 
 > Target: RAW support, history panel, before/after compare, batch editing, LUT support.
 
-- [ ] **Step 17:** RAW Processing — Import DNG/CR2/NEF/ARW via LibRaw FFI
-- [ ] **Step 18:** History Panel — Full list semua edit steps + named snapshots
-- [/] **Step 19:** Before/After Compare — Swipe slider untuk compare
+- [x] **Step 17:** RAW Processing — Import DNG/CR2/NEF/ARW via LibRaw FFI
+- [x] **Step 18:** History Panel — Full list semua edit steps + named snapshots
+- [ ] **Step 19:** Before/After Compare — Swipe slider untuk compare
 - [ ] **Step 20:** Batch Editing — Apply preset/adjustments ke banyak foto sekaligus
 - [ ] **Step 21:** LUT Support — Import & apply .cube dan .3dl files
 - [ ] **Step 22:** Keyword Tagging — Search & filter foto by keyword
