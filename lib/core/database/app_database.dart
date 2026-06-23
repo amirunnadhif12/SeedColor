@@ -15,6 +15,7 @@ class PhotosTable extends Table {
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
   BoolColumn get isTrash => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get keywords => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -57,7 +58,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (migrator, from, to) async {
+          if (from < 2) {
+            await migrator.addColumn(photosTable, photosTable.keywords);
+          }
+        },
+      );
 }
 
 QueryExecutor _openConnection() {

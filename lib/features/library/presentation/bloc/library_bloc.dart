@@ -18,6 +18,7 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
     on<AddPhotoToAlbumEvent>(_onAddPhotoToAlbum);
     on<RemovePhotoFromAlbumEvent>(_onRemovePhotoFromAlbum);
     on<DeletePhotoPermanentlyEvent>(_onDeletePhotoPermanently);
+    on<UpdatePhotoKeywords>(_onUpdatePhotoKeywords);
   }
 
   Future<void> _onLoadLibrary(LoadLibrary event, Emitter<LibraryState> emit) async {
@@ -137,6 +138,17 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
       try {
         await repository.deletePhotoPermanently(event.photoId);
         await _reloadLibraryData(emit, message: 'Photo permanently deleted');
+      } catch (e) {
+        emit(LibraryError(errorMessage: e.toString()));
+      }
+    }
+  }
+
+  Future<void> _onUpdatePhotoKeywords(UpdatePhotoKeywords event, Emitter<LibraryState> emit) async {
+    if (state is LibraryLoaded) {
+      try {
+        await repository.updatePhotoKeywords(event.photoId, event.keywords);
+        await _reloadLibraryData(emit);
       } catch (e) {
         emit(LibraryError(errorMessage: e.toString()));
       }

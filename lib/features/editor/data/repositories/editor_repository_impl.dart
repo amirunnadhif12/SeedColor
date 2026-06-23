@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -13,6 +14,7 @@ import '../../../../core/utils/math_utils.dart';
 import '../../domain/entities/curve_data.dart';
 import '../../domain/entities/edit_parameters.dart';
 import '../../domain/entities/edit_session.dart';
+import '../datasources/lut_parser.dart';
 import '../../domain/repositories/editor_repository.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../core/database/app_database.dart';
@@ -162,6 +164,18 @@ class EditorRepositoryImpl implements EditorRepository {
       shader.setFloat(1, targetHeight);
 
       final params = session.currentParameters;
+
+      // Muat 3D LUT jika tersedia
+      ui.Image? custom3dLutImage;
+      if (params.lutPath != null && params.lutSize > 0.0) {
+        try {
+          final lutData = await LutParser.parse(params.lutPath!);
+          custom3dLutImage = await _generate3dLutImage(lutData);
+        } catch (e) {
+          debugPrint('Gagal memuat atau mem-parse 3D LUT: $e');
+        }
+      }
+
       shader.setFloat(2, params.exposure);
       shader.setFloat(3, params.contrast);
       shader.setFloat(4, params.highlights);
@@ -246,9 +260,12 @@ class EditorRepositoryImpl implements EditorRepository {
       shader.setFloat(57, params.colorNR);
       shader.setFloat(58, params.removeChromaticAberration ? 1.0 : 0.0);
       shader.setFloat(59, params.enableLensCorrection ? 1.0 : 0.0);
+      shader.setFloat(60, params.lutSize);
+      shader.setFloat(61, params.lutIntensity);
 
       shader.setImageSampler(0, rawImage);
       shader.setImageSampler(1, lutImage);
+      shader.setImageSampler(2, custom3dLutImage ?? lutImage);
 
       // Terapkan matriks transformasi geometri
       final double tiltX = params.perspectiveVertical * 0.005;
@@ -308,6 +325,8 @@ class EditorRepositoryImpl implements EditorRepository {
           format: format,
           quality: quality,
           outputPath: outputPath,
+          originalBytes: originalBytes,
+          editParams: params,
         ),
       );
 
@@ -341,6 +360,18 @@ class EditorRepositoryImpl implements EditorRepository {
     );
     return completer.future;
   }
+
+  Future<ui.Image> _generate3dLutImage(LutData lutData) async {
+    final completer = Completer<ui.Image>();
+    ui.decodeImageFromPixels(
+      lutData.rgbaBytes,
+      lutData.size * lutData.size,
+      lutData.size,
+      ui.PixelFormat.rgba8888,
+      (img) => completer.complete(img),
+    );
+    return completer.future;
+  }
 }
 
 class ImageEncodingParams {
@@ -350,6 +381,8 @@ class ImageEncodingParams {
   final String format;
   final int quality;
   final String outputPath;
+  final Uint8List? originalBytes;
+  final EditParameters editParams;
 
   ImageEncodingParams({
     required this.rgbaBytes,
@@ -358,7 +391,71 @@ class ImageEncodingParams {
     required this.format,
     required this.quality,
     required this.outputPath,
+    this.originalBytes,
+    required this.editParams,
   });
+}
+
+img.ExifData injectEditMetadata(Uint8List? originalBytes, EditParameters editParams) {
+  img.ExifData exif = img.ExifData();
+  if (originalBytes != null) {
+    try {
+      final decodedOrig = img.decodeImage(originalBytes);
+      if (decodedOrig != null) {
+        exif = img.ExifData.from(decodedOrig.exif);
+      }
+    } catch (_) {
+      // Ignore EXIF decode errors of original
+    }
+  }
+
+  // Ensure directories exist
+  if (!exif.directories.containsKey('ifd0')) {
+    exif.directories['ifd0'] = img.IfdDirectory();
+  }
+  final ifd0 = exif.directories['ifd0']!;
+  if (!ifd0.sub.containsKey('exif')) {
+    ifd0.sub['exif'] = img.IfdDirectory();
+  }
+  final exifIfd = ifd0.sub['exif'];
+
+  // Create JSON of editing parameters
+  final editMetadata = {
+    'exposure': editParams.exposure,
+    'contrast': editParams.contrast,
+    'highlights': editParams.highlights,
+    'shadows': editParams.shadows,
+    'whites': editParams.whites,
+    'blacks': editParams.blacks,
+    'temperature': editParams.temperature,
+    'tint': editParams.tint,
+    'vibrance': editParams.vibrance,
+    'saturation': editParams.saturation,
+    'texture': editParams.texture,
+    'clarity': editParams.clarity,
+    'dehaze': editParams.dehaze,
+    'vignette': editParams.vignette,
+    'grain': editParams.grain,
+    'sharpeningAmount': editParams.sharpeningAmount,
+    'rotation': editParams.rotation,
+    'aspectRatio': editParams.aspectRatio,
+  };
+
+  final jsonStr = jsonEncode(editMetadata);
+  exifIfd[0x9286] = img.IfdValueAscii.string(jsonStr);
+
+  // Also set DateTime tag in IFD0 if not present
+  if (!ifd0.containsKey(0x0132)) {
+    final now = DateTime.now();
+    String pad(int n) => n.toString().padLeft(2, '0');
+    final nowStr = '${now.year}:${pad(now.month)}:${pad(now.day)} ${pad(now.hour)}:${pad(now.minute)}:${pad(now.second)}';
+    ifd0[0x0132] = img.IfdValueAscii.string(nowStr);
+  }
+
+  // Software
+  ifd0[0x0131] = img.IfdValueAscii.string('SeedColor');
+
+  return exif;
 }
 
 Future<void> _encodeAndSaveImage(ImageEncodingParams params) async {
@@ -368,6 +465,8 @@ Future<void> _encodeAndSaveImage(ImageEncodingParams params) async {
     bytes: params.rgbaBytes.buffer,
     order: img.ChannelOrder.rgba,
   );
+
+  imgImage.exif = injectEditMetadata(params.originalBytes, params.editParams);
 
   final List<int> encodedBytes;
   if (params.format.toLowerCase() == 'png') {

@@ -8,6 +8,7 @@ class Photo extends Equatable {
   final bool isFavorite;
   final bool isTrash;
   final DateTime createdAt;
+  final List<String> keywords;
 
   const Photo({
     required this.id,
@@ -17,6 +18,7 @@ class Photo extends Equatable {
     this.isFavorite = false,
     this.isTrash = false,
     required this.createdAt,
+    this.keywords = const [],
   });
 
   Photo copyWith({
@@ -27,6 +29,7 @@ class Photo extends Equatable {
     bool? isFavorite,
     bool? isTrash,
     DateTime? createdAt,
+    List<String>? keywords,
   }) {
     return Photo(
       id: id ?? this.id,
@@ -36,9 +39,19 @@ class Photo extends Equatable {
       isFavorite: isFavorite ?? this.isFavorite,
       isTrash: isTrash ?? this.isTrash,
       createdAt: createdAt ?? this.createdAt,
+      keywords: keywords ?? this.keywords,
     );
   }
 
   @override
-  List<Object?> get props => [id, path, thumbnailPath, rating, isFavorite, isTrash, createdAt];
+  List<Object?> get props => [
+        id,
+        path,
+        thumbnailPath,
+        rating,
+        isFavorite,
+        isTrash,
+        createdAt,
+        keywords,
+      ];
 }

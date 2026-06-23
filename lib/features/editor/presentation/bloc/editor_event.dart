@@ -128,6 +128,22 @@ class UpdateGeometry extends EditorEvent {
   List<Object?> get props => [parameters];
 }
 
+/// Memperbarui parameter LUT (Path, Intensity, Size)
+class UpdateLut extends EditorEvent {
+  final String? lutPath;
+  final double lutIntensity;
+  final double lutSize;
+
+  const UpdateLut({
+    this.lutPath,
+    this.lutIntensity = 1.0,
+    this.lutSize = 0.0,
+  });
+
+  @override
+  List<Object?> get props => [lutPath, lutIntensity, lutSize];
+}
+
 /// Mengatur ulang seluruh parameter edit ke awal (identity)
 class ResetAll extends EditorEvent {
   const ResetAll();

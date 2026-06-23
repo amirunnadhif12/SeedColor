@@ -32,6 +32,8 @@ import '../widgets/panels/optics_panel.dart';
 import '../widgets/panels/geometry_panel.dart';
 import '../widgets/panels/presets_panel.dart';
 import '../widgets/panels/history_panel.dart';
+import '../widgets/panels/lut_panel.dart';
+import '../../data/datasources/lut_parser.dart';
 import '../../../export/presentation/widgets/export_dialog.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../../core/database/app_database.dart';
@@ -152,6 +154,11 @@ class _EditorPageState extends State<EditorPage>
   bool _showCompare = false;
   double _compareDragRatio = 0.5;
 
+  // 3D LUT Support
+  String? _loadedLutPath;
+  ui.Image? _custom3dLutImage;
+  bool _isLutLoading = false;
+
   final List<ToolItem> _tools = [
     const ToolItem(Icons.style_rounded, 'Presets', Color(0xFF00E6FF)),
     const ToolItem(Icons.wb_sunny_rounded, 'Light', AppColors.toolLight),
@@ -159,6 +166,7 @@ class _EditorPageState extends State<EditorPage>
     const ToolItem(Icons.auto_awesome_rounded, 'Effects', AppColors.toolEffects),
     const ToolItem(Icons.details_rounded, 'Detail', AppColors.toolDetail),
     const ToolItem(Icons.camera_rounded, 'Optics', Color(0xFFBC8CFF)),
+    const ToolItem(Icons.table_chart_rounded, 'LUT', AppColors.primary),
     const ToolItem(Icons.crop_rounded, 'Geometry', AppColors.toolGeometry),
     const ToolItem(Icons.layers_rounded, 'Masking', AppColors.toolMasking),
     const ToolItem(Icons.history_rounded, 'Riwayat', Color(0xFFFF9500)),
@@ -375,6 +383,49 @@ class _EditorPageState extends State<EditorPage>
     }
   }
 
+  Future<void> _syncLutImage(String? path, double size) async {
+    if (path == null || size == 0.0) {
+      if (_custom3dLutImage != null || _loadedLutPath != null) {
+        setState(() {
+          _custom3dLutImage = null;
+          _loadedLutPath = null;
+        });
+      }
+      return;
+    }
+
+    if (_loadedLutPath == path || _isLutLoading) return;
+    _isLutLoading = true;
+    _loadedLutPath = path;
+
+    try {
+      final lutData = await LutParser.parse(path);
+      final completer = Completer<ui.Image>();
+      ui.decodeImageFromPixels(
+        lutData.rgbaBytes,
+        lutData.size * lutData.size,
+        lutData.size,
+        ui.PixelFormat.rgba8888,
+        (img) => completer.complete(img),
+      );
+      final newLutImage = await completer.future;
+      if (mounted) {
+        setState(() {
+          _custom3dLutImage = newLutImage;
+          _isLutLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading 3D LUT preview: $e');
+      if (mounted) {
+        setState(() {
+          _custom3dLutImage = null;
+          _isLutLoading = false;
+        });
+      }
+    }
+  }
+
   List<double> _hueToRgb(double hue) {
     final h = hue / 60.0;
     final x = 1.0 - (h % 2.0 - 1.0).abs();
@@ -445,6 +496,7 @@ class _EditorPageState extends State<EditorPage>
     _highlightsSat = params.highlightsSat;
     _cgBlending = params.cgBlending;
     _cgBalance = params.cgBalance;
+    _syncLutImage(params.lutPath, params.lutSize);
   }
 
   @override
@@ -497,7 +549,7 @@ class _EditorPageState extends State<EditorPage>
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: _buildImagePreview(),
+                        child: _buildImagePreview(state),
                       ),
                       if (_currentToolLabel == 'Masking') _buildMaskingSidebar(),
                     ],
@@ -896,7 +948,7 @@ class _EditorPageState extends State<EditorPage>
   }
 
   /// Main canvas, feeding current tool selected values to GLSL Shader
-  Widget _buildImagePreview() {
+  Widget _buildImagePreview(EditorState state) {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -977,6 +1029,9 @@ class _EditorPageState extends State<EditorPage>
             highlightsColor: _hueSatToRgbVec3(_highlightsHue, _highlightsSat),
             cgBlending: _cgBlending,
             cgBalance: _cgBalance,
+            custom3dLutImage: _custom3dLutImage,
+            lutSize: state.session?.currentParameters.lutSize ?? 0.0,
+            lutIntensity: state.session?.currentParameters.lutIntensity ?? 1.0,
           )
         : ImageCanvas(
             image: imageToRender,
@@ -1019,6 +1074,9 @@ class _EditorPageState extends State<EditorPage>
             highlightsColor: _hueSatToRgbVec3(_highlightsHue, _highlightsSat),
             cgBlending: _cgBlending,
             cgBalance: _cgBalance,
+            custom3dLutImage: _custom3dLutImage,
+            lutSize: state.session?.currentParameters.lutSize ?? 0.0,
+            lutIntensity: state.session?.currentParameters.lutIntensity ?? 1.0,
           );
 
     // Apply 3D Perspective, Flip, and Rotation
@@ -1465,6 +1523,18 @@ class _EditorPageState extends State<EditorPage>
             });
             final updatedParams = params.copyWith(enableLensCorrection: val);
             context.read<EditorBloc>().add(UpdateOptics(updatedParams));
+          },
+        );
+
+      case 'LUT':
+        return LutPanel(
+          parameters: params,
+          onLutChanged: ({lutPath, required lutIntensity, required lutSize}) {
+            context.read<EditorBloc>().add(UpdateLut(
+                  lutPath: lutPath,
+                  lutSize: lutSize,
+                  lutIntensity: lutIntensity,
+                ));
           },
         );
 

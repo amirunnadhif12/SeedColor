@@ -248,6 +248,16 @@ class PhotoThumbnail extends StatelessWidget {
 
                       const Divider(color: Colors.white12, height: 24),
 
+                      // Manage Keywords
+                      ListTile(
+                        leading: const Icon(Icons.tag_rounded, color: Colors.white70),
+                        title: const Text('Manage Keywords', style: TextStyle(color: Colors.white)),
+                        onTap: () {
+                          Navigator.pop(bottomSheetContext);
+                          _showManageKeywordsDialog(context, photo);
+                        },
+                      ),
+
                       // Move to Trash
                       ListTile(
                         leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
@@ -268,6 +278,117 @@ class PhotoThumbnail extends StatelessWidget {
               );
             },
           ),
+        );
+      },
+    );
+  }
+
+  void _showManageKeywordsDialog(BuildContext context, Photo photo) {
+    final textController = TextEditingController();
+    final List<String> tempKeywords = List.from(photo.keywords);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (stateContext, setDialogState) {
+            void addKeyword() {
+              final newTag = textController.text.trim();
+              if (newTag.isNotEmpty && !tempKeywords.contains(newTag)) {
+                setDialogState(() {
+                  tempKeywords.add(newTag);
+                });
+                textController.clear();
+              }
+            }
+
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E1E2E),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text(
+                'Manage Keywords',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: textController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Add keyword...',
+                        hintStyle: const TextStyle(color: Colors.white38),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF0A84FF)),
+                          onPressed: addKeyword,
+                        ),
+                        enabledBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white24),
+                        ),
+                        focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF0A84FF)),
+                        ),
+                      ),
+                      onSubmitted: (_) => addKeyword(),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Keywords:',
+                      style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    if (tempKeywords.isEmpty)
+                      const Text(
+                        'No keywords added yet.',
+                        style: TextStyle(color: Colors.white30, fontSize: 12, fontStyle: FontStyle.italic),
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: tempKeywords.map((tag) {
+                          return Chip(
+                            label: Text(tag, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                            backgroundColor: Colors.white.withValues(alpha: 0.08),
+                            deleteIcon: const Icon(Icons.close_rounded, size: 14, color: Colors.white70),
+                            onDeleted: () {
+                              setDialogState(() {
+                                tempKeywords.remove(tag);
+                              });
+                            },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    context.read<LibraryBloc>().add(
+                          UpdatePhotoKeywords(
+                            photoId: photo.id,
+                            keywords: tempKeywords,
+                          ),
+                        );
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('Save', style: TextStyle(color: Color(0xFF0A84FF), fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
         );
       },
     );

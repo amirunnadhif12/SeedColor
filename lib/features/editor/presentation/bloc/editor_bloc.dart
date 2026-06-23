@@ -43,6 +43,7 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
     on<UpdateDetail>(_onUpdateDetail);
     on<UpdateOptics>(_onUpdateOptics);
     on<UpdateGeometry>(_onUpdateGeometry);
+    on<UpdateLut>(_onUpdateLut);
     on<ResetAll>(_onResetAll);
     on<Export>(_onExport);
     on<ApplyPreset>(_onApplyPreset);
@@ -228,6 +229,20 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
         _addHistoryState(emit, updatedSession, label);
       },
     );
+  }
+
+  void _onUpdateLut(UpdateLut event, Emitter<EditorState> emit) {
+    final session = state.session;
+    if (session == null) return;
+
+    final updatedParameters = session.currentParameters.copyWith(
+      lutPath: event.lutPath,
+      lutIntensity: event.lutIntensity,
+      lutSize: event.lutSize,
+    );
+
+    final updatedSession = session.copyWith(currentParameters: updatedParameters);
+    _addHistoryState(emit, updatedSession, event.lutPath == null ? 'Hapus 3D LUT' : 'Terapkan 3D LUT');
   }
 
   void _onResetAll(ResetAll event, Emitter<EditorState> emit) {
@@ -506,6 +521,17 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
     // 9. Curves
     if (oldParams.curveData != newParams.curveData) {
       return 'Kurva Warna';
+    }
+
+    // 10. LUT
+    if (oldParams.lutPath != newParams.lutPath) {
+      if (newParams.lutPath == null) {
+        return 'Hapus 3D LUT';
+      }
+      return 'Terapkan 3D LUT';
+    }
+    if (oldParams.lutIntensity != newParams.lutIntensity) {
+      return 'Intensitas LUT: ${(newParams.lutIntensity * 100).round()}%';
     }
 
     return 'Edit Parameter';

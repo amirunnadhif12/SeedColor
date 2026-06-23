@@ -184,7 +184,16 @@ class LibraryRepositoryImpl implements LibraryRepository {
     return list.map(_mapPhotoDataToEntity).toList();
   }
 
+  @override
+  Future<void> updatePhotoKeywords(String id, List<String> keywords) {
+    final keywordsStr = keywords.isEmpty ? null : keywords.join(',');
+    return photoDataSource.updatePhotoKeywords(id, keywordsStr);
+  }
+
   Photo _mapPhotoDataToEntity(PhotoData data) {
+    final keywordList = data.keywords != null && data.keywords!.isNotEmpty
+        ? data.keywords!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
+        : <String>[];
     return Photo(
       id: data.id,
       path: data.path,
@@ -193,6 +202,7 @@ class LibraryRepositoryImpl implements LibraryRepository {
       isFavorite: data.isFavorite,
       isTrash: data.isTrash,
       createdAt: data.createdAt,
+      keywords: keywordList,
     );
   }
 }

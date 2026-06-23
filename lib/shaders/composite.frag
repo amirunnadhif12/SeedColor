@@ -4,6 +4,7 @@
 uniform vec2 uSize;
 uniform sampler2D uTexture;
 uniform sampler2D uLutTexture; // 256x1 texture: R=Red, G=Green, B=Blue, A=RGB curve
+uniform sampler2D u3dLutTexture;
 
 // --- Step 1: Light Adjustments ---
 uniform float uExposure;   // -5.0 to 5.0
@@ -75,8 +76,28 @@ uniform float uLuminanceNR;
 uniform float uColorNR;
 uniform float uRemoveChromaticAberration;
 uniform float uEnableLensCorrection;
+uniform float u3dLutSize;       // e.g. 33.0, atau 0.0 jika dinonaktifkan
+uniform float u3dLutIntensity;  // 0.0 s.d. 1.0
 
 out vec4 fragColor;
+
+vec3 sample3dLut(sampler2D lutTex, vec3 color, float lutSize) {
+    float blue = color.b * (lutSize - 1.0);
+    float slice0 = floor(blue);
+    float slice1 = min(lutSize - 1.0, slice0 + 1.0);
+    float fractVal = blue - slice0;
+    
+    float x0 = (slice0 * lutSize + color.r * (lutSize - 1.0) + 0.5) / (lutSize * lutSize);
+    float y0 = (color.g * (lutSize - 1.0) + 0.5) / lutSize;
+    
+    float x1 = (slice1 * lutSize + color.r * (lutSize - 1.0) + 0.5) / (lutSize * lutSize);
+    float y1 = (color.g * (lutSize - 1.0) + 0.5) / lutSize;
+    
+    vec3 lutColor0 = texture(lutTex, vec2(x0, y0)).rgb;
+    vec3 lutColor1 = texture(lutTex, vec2(x1, y1)).rgb;
+    
+    return mix(lutColor0, lutColor1, fractVal);
+}
 
 // --- RGB/HSL Conversion Utilities ---
 vec3 rgb2hsl(vec3 c) {
@@ -528,6 +549,14 @@ void main() {
     color.rgb += uShadowsColor * wShadow * (1.0 - color.rgb) * 0.5;
     color.rgb += uMidtonesColor * wMidtone * (1.0 - color.rgb) * 0.5;
     color.rgb += uHighlightsColor * wHighlight * (1.0 - color.rgb) * 0.5;
+    
+    // ==========================================
+    // 6. 3D LUT (lut.frag)
+    // ==========================================
+    if (u3dLutSize > 0.0 && u3dLutIntensity > 0.0) {
+        vec3 lutColor = sample3dLut(u3dLutTexture, color.rgb, u3dLutSize);
+        color.rgb = mix(color.rgb, lutColor, u3dLutIntensity);
+    }
     
     fragColor = vec4(clamp(color.rgb, 0.0, 1.0), color.a);
 }

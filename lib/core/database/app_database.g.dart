@@ -90,6 +90,17 @@ class $PhotosTableTable extends PhotosTable
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _keywordsMeta = const VerificationMeta(
+    'keywords',
+  );
+  @override
+  late final GeneratedColumn<String> keywords = GeneratedColumn<String>(
+    'keywords',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -99,6 +110,7 @@ class $PhotosTableTable extends PhotosTable
     isFavorite,
     isTrash,
     createdAt,
+    keywords,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -158,6 +170,12 @@ class $PhotosTableTable extends PhotosTable
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('keywords')) {
+      context.handle(
+        _keywordsMeta,
+        keywords.isAcceptableOrUnknown(data['keywords']!, _keywordsMeta),
+      );
+    }
     return context;
   }
 
@@ -195,6 +213,10 @@ class $PhotosTableTable extends PhotosTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      keywords: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}keywords'],
+      ),
     );
   }
 
@@ -212,6 +234,7 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
   final bool isFavorite;
   final bool isTrash;
   final DateTime createdAt;
+  final String? keywords;
   const PhotoData({
     required this.id,
     required this.path,
@@ -220,6 +243,7 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
     required this.isFavorite,
     required this.isTrash,
     required this.createdAt,
+    this.keywords,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -233,6 +257,9 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
     map['is_favorite'] = Variable<bool>(isFavorite);
     map['is_trash'] = Variable<bool>(isTrash);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || keywords != null) {
+      map['keywords'] = Variable<String>(keywords);
+    }
     return map;
   }
 
@@ -247,6 +274,9 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
       isFavorite: Value(isFavorite),
       isTrash: Value(isTrash),
       createdAt: Value(createdAt),
+      keywords: keywords == null && nullToAbsent
+          ? const Value.absent()
+          : Value(keywords),
     );
   }
 
@@ -263,6 +293,7 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
       isTrash: serializer.fromJson<bool>(json['isTrash']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      keywords: serializer.fromJson<String?>(json['keywords']),
     );
   }
   @override
@@ -276,6 +307,7 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
       'isFavorite': serializer.toJson<bool>(isFavorite),
       'isTrash': serializer.toJson<bool>(isTrash),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'keywords': serializer.toJson<String?>(keywords),
     };
   }
 
@@ -287,6 +319,7 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
     bool? isFavorite,
     bool? isTrash,
     DateTime? createdAt,
+    Value<String?> keywords = const Value.absent(),
   }) => PhotoData(
     id: id ?? this.id,
     path: path ?? this.path,
@@ -297,6 +330,7 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
     isFavorite: isFavorite ?? this.isFavorite,
     isTrash: isTrash ?? this.isTrash,
     createdAt: createdAt ?? this.createdAt,
+    keywords: keywords.present ? keywords.value : this.keywords,
   );
   PhotoData copyWithCompanion(PhotosTableCompanion data) {
     return PhotoData(
@@ -311,6 +345,7 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
           : this.isFavorite,
       isTrash: data.isTrash.present ? data.isTrash.value : this.isTrash,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      keywords: data.keywords.present ? data.keywords.value : this.keywords,
     );
   }
 
@@ -323,7 +358,8 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
           ..write('rating: $rating, ')
           ..write('isFavorite: $isFavorite, ')
           ..write('isTrash: $isTrash, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('keywords: $keywords')
           ..write(')'))
         .toString();
   }
@@ -337,6 +373,7 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
     isFavorite,
     isTrash,
     createdAt,
+    keywords,
   );
   @override
   bool operator ==(Object other) =>
@@ -348,7 +385,8 @@ class PhotoData extends DataClass implements Insertable<PhotoData> {
           other.rating == this.rating &&
           other.isFavorite == this.isFavorite &&
           other.isTrash == this.isTrash &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.keywords == this.keywords);
 }
 
 class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
@@ -359,6 +397,7 @@ class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
   final Value<bool> isFavorite;
   final Value<bool> isTrash;
   final Value<DateTime> createdAt;
+  final Value<String?> keywords;
   final Value<int> rowid;
   const PhotosTableCompanion({
     this.id = const Value.absent(),
@@ -368,6 +407,7 @@ class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
     this.isFavorite = const Value.absent(),
     this.isTrash = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.keywords = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PhotosTableCompanion.insert({
@@ -378,6 +418,7 @@ class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
     this.isFavorite = const Value.absent(),
     this.isTrash = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.keywords = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        path = Value(path);
@@ -389,6 +430,7 @@ class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
     Expression<bool>? isFavorite,
     Expression<bool>? isTrash,
     Expression<DateTime>? createdAt,
+    Expression<String>? keywords,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -399,6 +441,7 @@ class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
       if (isFavorite != null) 'is_favorite': isFavorite,
       if (isTrash != null) 'is_trash': isTrash,
       if (createdAt != null) 'created_at': createdAt,
+      if (keywords != null) 'keywords': keywords,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -411,6 +454,7 @@ class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
     Value<bool>? isFavorite,
     Value<bool>? isTrash,
     Value<DateTime>? createdAt,
+    Value<String?>? keywords,
     Value<int>? rowid,
   }) {
     return PhotosTableCompanion(
@@ -421,6 +465,7 @@ class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
       isFavorite: isFavorite ?? this.isFavorite,
       isTrash: isTrash ?? this.isTrash,
       createdAt: createdAt ?? this.createdAt,
+      keywords: keywords ?? this.keywords,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -449,6 +494,9 @@ class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (keywords.present) {
+      map['keywords'] = Variable<String>(keywords.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -465,6 +513,7 @@ class PhotosTableCompanion extends UpdateCompanion<PhotoData> {
           ..write('isFavorite: $isFavorite, ')
           ..write('isTrash: $isTrash, ')
           ..write('createdAt: $createdAt, ')
+          ..write('keywords: $keywords, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1416,6 +1465,7 @@ typedef $$PhotosTableTableCreateCompanionBuilder =
       Value<bool> isFavorite,
       Value<bool> isTrash,
       Value<DateTime> createdAt,
+      Value<String?> keywords,
       Value<int> rowid,
     });
 typedef $$PhotosTableTableUpdateCompanionBuilder =
@@ -1427,6 +1477,7 @@ typedef $$PhotosTableTableUpdateCompanionBuilder =
       Value<bool> isFavorite,
       Value<bool> isTrash,
       Value<DateTime> createdAt,
+      Value<String?> keywords,
       Value<int> rowid,
     });
 
@@ -1502,6 +1553,11 @@ class $$PhotosTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get keywords => $composableBuilder(
+    column: $table.keywords,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> albumPhotosTableRefs(
     Expression<bool> Function($$AlbumPhotosTableTableFilterComposer f) f,
   ) {
@@ -1571,6 +1627,11 @@ class $$PhotosTableTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get keywords => $composableBuilder(
+    column: $table.keywords,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PhotosTableTableAnnotationComposer
@@ -1606,6 +1667,9 @@ class $$PhotosTableTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get keywords =>
+      $composableBuilder(column: $table.keywords, builder: (column) => column);
 
   Expression<T> albumPhotosTableRefs<T extends Object>(
     Expression<T> Function($$AlbumPhotosTableTableAnnotationComposer a) f,
@@ -1668,6 +1732,7 @@ class $$PhotosTableTableTableManager
                 Value<bool> isFavorite = const Value.absent(),
                 Value<bool> isTrash = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> keywords = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PhotosTableCompanion(
                 id: id,
@@ -1677,6 +1742,7 @@ class $$PhotosTableTableTableManager
                 isFavorite: isFavorite,
                 isTrash: isTrash,
                 createdAt: createdAt,
+                keywords: keywords,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1688,6 +1754,7 @@ class $$PhotosTableTableTableManager
                 Value<bool> isFavorite = const Value.absent(),
                 Value<bool> isTrash = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String?> keywords = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PhotosTableCompanion.insert(
                 id: id,
@@ -1697,6 +1764,7 @@ class $$PhotosTableTableTableManager
                 isFavorite: isFavorite,
                 isTrash: isTrash,
                 createdAt: createdAt,
+                keywords: keywords,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

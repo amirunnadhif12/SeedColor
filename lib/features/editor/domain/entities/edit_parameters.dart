@@ -71,6 +71,11 @@ class EditParameters extends Equatable {
   final CurveData curveData;
   final HslAdjustments hslAdjustments;
 
+  // ─── 3D LUT Support ──────────────────────────────────
+  final String? lutPath;
+  final double lutIntensity; // 0.0 s.d. 1.0
+  final double lutSize;      // misal 33.0, atau 0.0 jika dinonaktifkan
+
   const EditParameters({
     this.exposure = 0.0,
     this.contrast = 0.0,
@@ -115,6 +120,9 @@ class EditParameters extends Equatable {
     this.cgBalance = 0.0,
     this.curveData = const CurveData(rgb: [], red: [], green: [], blue: []),
     this.hslAdjustments = const HslAdjustments(),
+    this.lutPath,
+    this.lutIntensity = 1.0,
+    this.lutSize = 0.0,
   });
 
   /// factory untuk inisialisasi default / identitas filter kosong
@@ -122,6 +130,9 @@ class EditParameters extends Equatable {
     return EditParameters(
       curveData: CurveData.identity(),
       hslAdjustments: const HslAdjustments(),
+      lutPath: null,
+      lutIntensity: 1.0,
+      lutSize: 0.0,
     );
   }
 
@@ -169,6 +180,9 @@ class EditParameters extends Equatable {
     double? cgBalance,
     CurveData? curveData,
     HslAdjustments? hslAdjustments,
+    String? lutPath,
+    double? lutIntensity,
+    double? lutSize,
   }) {
     return EditParameters(
       exposure: exposure ?? this.exposure,
@@ -214,6 +228,9 @@ class EditParameters extends Equatable {
       cgBalance: cgBalance ?? this.cgBalance,
       curveData: curveData ?? this.curveData,
       hslAdjustments: hslAdjustments ?? this.hslAdjustments,
+      lutPath: lutPath ?? this.lutPath,
+      lutIntensity: lutIntensity ?? this.lutIntensity,
+      lutSize: lutSize ?? this.lutSize,
     );
   }
 
@@ -262,5 +279,8 @@ class EditParameters extends Equatable {
         cgBalance,
         curveData,
         hslAdjustments,
+        lutPath,
+        lutIntensity,
+        lutSize,
       ];
 }

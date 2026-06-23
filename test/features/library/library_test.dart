@@ -72,6 +72,14 @@ class MockLibraryRepository implements LibraryRepository {
   }
 
   @override
+  Future<void> updatePhotoKeywords(String id, List<String> keywords) async {
+    final index = allPhotos.indexWhere((p) => p.id == id);
+    if (index != -1) {
+      allPhotos[index] = allPhotos[index].copyWith(keywords: keywords);
+    }
+  }
+
+  @override
   Future<List<Album>> getAlbums() async => albums;
 
   @override
@@ -168,6 +176,15 @@ void main() {
       final loaded = bloc.state as LibraryLoaded;
       expect(loaded.favoritePhotos.length, equals(1));
       expect(loaded.favoritePhotos.first.id, equals('p1'));
+    });
+
+    test('UpdatePhotoKeywords should update keywords and reload', () async {
+      bloc.add(const UpdatePhotoKeywords(photoId: 'p1', keywords: ['nature', 'sunset']));
+      await Future.delayed(Duration.zero);
+
+      expect(mockRepository.allPhotos.first.keywords, equals(['nature', 'sunset']));
+      final loaded = bloc.state as LibraryLoaded;
+      expect(loaded.allPhotos.first.keywords, equals(['nature', 'sunset']));
     });
   });
 

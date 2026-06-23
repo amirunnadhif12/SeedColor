@@ -51,6 +51,11 @@ class ImageCanvas extends StatelessWidget {
   final double cgBlending;
   final double cgBalance;
 
+  // 3D LUT Support
+  final ui.Image? custom3dLutImage;
+  final double lutSize;
+  final double lutIntensity;
+
   const ImageCanvas({
     super.key,
     required this.image,
@@ -85,6 +90,9 @@ class ImageCanvas extends StatelessWidget {
     required this.highlightsColor,
     required this.cgBlending,
     required this.cgBalance,
+    this.custom3dLutImage,
+    this.lutSize = 0.0,
+    this.lutIntensity = 1.0,
   });
 
   @override
@@ -137,6 +145,9 @@ class ImageCanvas extends StatelessWidget {
                   highlightsColor: highlightsColor,
                   cgBlending: cgBlending,
                   cgBalance: cgBalance,
+                  custom3dLutImage: custom3dLutImage,
+                  lutSize: lutSize,
+                  lutIntensity: lutIntensity,
                 ),
               ),
             ),
@@ -191,6 +202,11 @@ class ShaderPainter extends CustomPainter {
   final double cgBlending;
   final double cgBalance;
 
+  // 3D LUT Support
+  final ui.Image? custom3dLutImage;
+  final double lutSize;
+  final double lutIntensity;
+
   ShaderPainter({
     required this.shader,
     required this.image,
@@ -224,6 +240,9 @@ class ShaderPainter extends CustomPainter {
     required this.highlightsColor,
     required this.cgBlending,
     required this.cgBalance,
+    this.custom3dLutImage,
+    this.lutSize = 0.0,
+    this.lutIntensity = 1.0,
   });
 
   @override
@@ -332,10 +351,13 @@ class ShaderPainter extends CustomPainter {
     s.setFloat(57, colorNR);
     s.setFloat(58, removeChromaticAberration ? 1.0 : 0.0);
     s.setFloat(59, enableLensCorrection ? 1.0 : 0.0);
+    s.setFloat(60, lutSize);
+    s.setFloat(61, lutIntensity);
 
     // Bind Samplers
     s.setImageSampler(0, image);
     s.setImageSampler(1, lutImage);
+    s.setImageSampler(2, custom3dLutImage ?? lutImage);
 
     // Draw rect covering the size bounds with shader paint
     final paint = Paint()..shader = s;
@@ -371,8 +393,10 @@ class ShaderPainter extends CustomPainter {
         oldDelegate.shadowsColor != shadowsColor ||
         oldDelegate.midtonesColor != midtonesColor ||
         oldDelegate.highlightsColor != highlightsColor ||
-        oldDelegate.cgBlending != cgBlending ||
         oldDelegate.cgBalance != cgBalance ||
+        oldDelegate.lutSize != lutSize ||
+        oldDelegate.lutIntensity != lutIntensity ||
+        oldDelegate.custom3dLutImage != custom3dLutImage ||
         oldDelegate.image != image ||
         oldDelegate.lutImage != lutImage;
   }

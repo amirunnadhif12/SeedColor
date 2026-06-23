@@ -57,6 +57,11 @@ class CompareCanvas extends StatefulWidget {
   final double cgBlending;
   final double cgBalance;
 
+  // 3D LUT Support
+  final ui.Image? custom3dLutImage;
+  final double lutSize;
+  final double lutIntensity;
+
   const CompareCanvas({
     super.key,
     required this.image,
@@ -94,6 +99,9 @@ class CompareCanvas extends StatefulWidget {
     required this.highlightsColor,
     required this.cgBlending,
     required this.cgBalance,
+    this.custom3dLutImage,
+    this.lutSize = 0.0,
+    this.lutIntensity = 1.0,
   });
 
   @override
@@ -191,6 +199,9 @@ class _CompareCanvasState extends State<CompareCanvas> {
                             highlightsColor: widget.highlightsColor,
                             cgBlending: widget.cgBlending,
                             cgBalance: widget.cgBalance,
+                            custom3dLutImage: widget.custom3dLutImage,
+                            lutSize: widget.lutSize,
+                            lutIntensity: widget.lutIntensity,
                           ),
                         ),
                       ),
@@ -233,6 +244,9 @@ class _CompareCanvasState extends State<CompareCanvas> {
                               highlightsColor: const [0.0, 0.0, 0.0],
                               cgBlending: 50.0,
                               cgBalance: 0.0,
+                              custom3dLutImage: null,
+                              lutSize: 0.0,
+                              lutIntensity: 1.0,
                             ),
                           ),
                         ),

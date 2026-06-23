@@ -291,7 +291,10 @@ class PresetRepositoryImpl implements PresetRepository {
         'blue': {'hue': params.hslAdjustments.blue.hue, 'saturation': params.hslAdjustments.blue.saturation, 'lightness': params.hslAdjustments.blue.lightness},
         'purple': {'hue': params.hslAdjustments.purple.hue, 'saturation': params.hslAdjustments.purple.saturation, 'lightness': params.hslAdjustments.purple.lightness},
         'magenta': {'hue': params.hslAdjustments.magenta.hue, 'saturation': params.hslAdjustments.magenta.saturation, 'lightness': params.hslAdjustments.magenta.lightness},
-      }
+      },
+      'lutPath': params.lutPath,
+      'lutIntensity': params.lutIntensity,
+      'lutSize': params.lutSize,
     };
   }
 
@@ -389,6 +392,9 @@ class PresetRepositoryImpl implements PresetRepository {
       cgBalance: (map['cgBalance'] as num?)?.toDouble() ?? 0.0,
       curveData: curve,
       hslAdjustments: hsl,
+      lutPath: map['lutPath'] as String?,
+      lutIntensity: (map['lutIntensity'] as num?)?.toDouble() ?? 1.0,
+      lutSize: (map['lutSize'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

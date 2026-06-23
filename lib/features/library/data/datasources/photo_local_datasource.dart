@@ -11,6 +11,7 @@ abstract class PhotoLocalDataSource {
   Future<void> updatePhotoTrash(String id, bool isTrash);
   Future<void> deletePhotoPermanently(String id);
   Future<PhotoData?> getPhotoById(String id);
+  Future<void> updatePhotoKeywords(String id, String? keywords);
 }
 
 class PhotoLocalDataSourceImpl implements PhotoLocalDataSource {
@@ -76,5 +77,11 @@ class PhotoLocalDataSourceImpl implements PhotoLocalDataSource {
   Future<PhotoData?> getPhotoById(String id) {
     return (database.select(database.photosTable)..where((t) => t.id.equals(id)))
         .getSingleOrNull();
+  }
+
+  @override
+  Future<void> updatePhotoKeywords(String id, String? keywords) {
+    return (database.update(database.photosTable)..where((t) => t.id.equals(id)))
+        .write(PhotosTableCompanion(keywords: Value(keywords)));
   }
 }

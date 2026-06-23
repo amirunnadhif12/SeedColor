@@ -35,10 +35,20 @@ class _LibraryPageState extends State<LibraryPage> {
   Set<String> _selectedPhotoIds = {};
   bool _isLoadingBatch = false;
 
+  String _searchQuery = '';
+  final Set<String> _selectedFilterTags = {};
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _checkFirstLaunch();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _toggleSelectionMode() {
@@ -120,13 +130,31 @@ class _LibraryPageState extends State<LibraryPage> {
               }
 
               if (state is LibraryLoaded) {
+                final filteredAllPhotos = state.allPhotos.where((photo) {
+                  final matchesQuery = _searchQuery.isEmpty ||
+                      photo.keywords.any((k) => k.toLowerCase().contains(_searchQuery.toLowerCase()));
+                  final matchesTags = _selectedFilterTags.isEmpty ||
+                      _selectedFilterTags.every((tag) => photo.keywords.contains(tag));
+                  return matchesQuery && matchesTags;
+                }).toList();
+
+                final filteredFavoritePhotos = state.favoritePhotos.where((photo) {
+                  final matchesQuery = _searchQuery.isEmpty ||
+                      photo.keywords.any((k) => k.toLowerCase().contains(_searchQuery.toLowerCase()));
+                  final matchesTags = _selectedFilterTags.isEmpty ||
+                      _selectedFilterTags.every((tag) => photo.keywords.contains(tag));
+                  return matchesQuery && matchesTags;
+                }).toList();
+
                 return Stack(
                   children: [
                     CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
                         // Header
-                        SliverToBoxAdapter(child: _buildHeader(state)),
+                        SliverToBoxAdapter(
+                          child: _buildHeader(state, filteredAllPhotos, filteredFavoritePhotos),
+                        ),
 
                         // Title
                         SliverToBoxAdapter(
@@ -153,11 +181,14 @@ class _LibraryPageState extends State<LibraryPage> {
                           ),
                         ),
 
+                        // Search & Filter
+                        _buildSearchAndFilterSection(state),
+
                         // Active Section Header
                         SliverToBoxAdapter(child: _buildSectionHeader(context)),
 
                         // Content based on selection
-                        _buildActiveSectionContent(state),
+                        _buildActiveSectionContent(state, filteredAllPhotos, filteredFavoritePhotos),
 
                         // Bottom padding offset when in selection mode
                         SliverToBoxAdapter(
@@ -170,7 +201,7 @@ class _LibraryPageState extends State<LibraryPage> {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        child: _buildBottomBatchBar(context, state),
+                        child: _buildBottomBatchBar(context, state, filteredAllPhotos, filteredFavoritePhotos),
                       ),
                   ],
                 );
@@ -184,10 +215,9 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  /// Header matching logo and subtext of mockup
-  Widget _buildHeader(LibraryLoaded state) {
+  Widget _buildHeader(LibraryLoaded state, List<Photo> filteredAllPhotos, List<Photo> filteredFavoritePhotos) {
     if (_isSelectionMode) {
-      final List<Photo> activePhotos = _selectedSection == 1 ? state.allPhotos : state.favoritePhotos;
+      final List<Photo> activePhotos = _selectedSection == 1 ? filteredAllPhotos : filteredFavoritePhotos;
       final isAllSelected = _selectedPhotoIds.length == activePhotos.length && activePhotos.isNotEmpty;
 
       return Padding(
@@ -491,7 +521,7 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildActiveSectionContent(LibraryLoaded state) {
+  Widget _buildActiveSectionContent(LibraryLoaded state, List<Photo> filteredAllPhotos, List<Photo> filteredFavoritePhotos) {
     if (_selectedSection == 0) {
       if (state.albums.isEmpty) {
         return SliverToBoxAdapter(
@@ -525,7 +555,7 @@ class _LibraryPageState extends State<LibraryPage> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         sliver: SliverToBoxAdapter(
           child: PhotoGrid(
-            photos: state.allPhotos,
+            photos: filteredAllPhotos,
             emptyMessage: 'No photos imported yet',
             isSelectionMode: _isSelectionMode,
             selectedPhotoIds: _selectedPhotoIds,
@@ -546,7 +576,7 @@ class _LibraryPageState extends State<LibraryPage> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         sliver: SliverToBoxAdapter(
           child: PhotoGrid(
-            photos: state.favoritePhotos,
+            photos: filteredFavoritePhotos,
             emptyMessage: 'No favorite photos yet',
             isSelectionMode: _isSelectionMode,
             selectedPhotoIds: _selectedPhotoIds,
@@ -713,10 +743,120 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
+  Widget _buildSearchAndFilterSection(LibraryLoaded state) {
+    if (_selectedSection != 1 && _selectedSection != 2) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    // Collect all unique keywords from loaded photos
+    final allKeywords = <String>{};
+    for (final photo in state.allPhotos) {
+      allKeywords.addAll(photo.keywords);
+    }
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Search Text Field
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.backgroundPanel,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border, width: 0.5),
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Cari berdasarkan kata kunci...',
+                  hintStyle: const TextStyle(color: Colors.white30, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded, color: Colors.white54, size: 20),
+                          onPressed: () {
+                            setState(() {
+                              _searchController.clear();
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onChanged: (val) {
+                  setState(() {
+                    _searchQuery = val.trim();
+                  });
+                },
+              ),
+            ),
+            if (allKeywords.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 32,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  children: allKeywords.map((tag) {
+                    final isSelected = _selectedFilterTags.contains(tag);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedFilterTags.remove(tag);
+                            } else {
+                              _selectedFilterTags.add(tag);
+                            }
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFF0A84FF)
+                                : Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF0A84FF)
+                                  : Colors.white.withValues(alpha: 0.1),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            tag,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.white70,
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   // ─── Batch Operations UI & Logics ─────────────────────
 
-  Widget _buildBottomBatchBar(BuildContext context, LibraryLoaded state) {
-    final List<Photo> activePhotos = _selectedSection == 1 ? state.allPhotos : state.favoritePhotos;
+  Widget _buildBottomBatchBar(BuildContext context, LibraryLoaded state, List<Photo> filteredAllPhotos, List<Photo> filteredFavoritePhotos) {
+    final List<Photo> activePhotos = _selectedSection == 1 ? filteredAllPhotos : filteredFavoritePhotos;
     final hasSelection = _selectedPhotoIds.isNotEmpty && !_isLoadingBatch;
     final hasCopied = CopiedSettingsHelper.hasCopiedParameters;
 

@@ -78,3 +78,13 @@ class DeletePhotoPermanentlyEvent extends LibraryEvent {
   @override
   List<Object?> get props => [photoId];
 }
+
+class UpdatePhotoKeywords extends LibraryEvent {
+  final String photoId;
+  final List<String> keywords;
+
+  const UpdatePhotoKeywords({required this.photoId, required this.keywords});
+
+  @override
+  List<Object?> get props => [photoId, keywords];
+}
