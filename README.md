@@ -849,7 +849,7 @@ flutter install                  # Install ke device
 - [x] **Step 17:** RAW Processing — Import DNG/CR2/NEF/ARW via LibRaw FFI
 - [x] **Step 18:** History Panel — Full list semua edit steps + named snapshots
 - [x] **Step 19:** Before/After Compare — Swipe slider untuk compare
-- [ ] **Step 20:** Batch Editing — Apply preset/adjustments ke banyak foto sekaligus
+- [x] **Step 20:** Batch Editing — Apply preset/adjustments ke banyak foto sekaligus
 - [ ] **Step 21:** LUT Support — Import & apply .cube dan .3dl files
 - [ ] **Step 22:** Keyword Tagging — Search & filter foto by keyword
 - [ ] **Step 23:** EXIF Export — Simpan metadata editing di output

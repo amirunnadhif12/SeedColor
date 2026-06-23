@@ -15,10 +15,11 @@ import '../bloc/library_event.dart';
 import '../bloc/library_state.dart';
 import '../widgets/album_card.dart';
 import '../widgets/photo_grid.dart';
-import '../../editor/domain/repositories/editor_repository.dart';
-import '../../presets/domain/repositories/preset_repository.dart';
-import '../../presets/domain/entities/preset.dart';
-import '../../batch/batch_exporter.dart';
+import '../../../editor/domain/entities/edit_session.dart';
+import '../../../editor/domain/repositories/editor_repository.dart';
+import '../../../presets/domain/repositories/preset_repository.dart';
+import '../../../presets/domain/entities/preset.dart';
+import '../../../batch/batch_exporter.dart';
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
@@ -716,7 +717,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Widget _buildBottomBatchBar(BuildContext context, LibraryLoaded state) {
     final List<Photo> activePhotos = _selectedSection == 1 ? state.allPhotos : state.favoritePhotos;
-    final hasSelection = _selectedPhotoIds.isNotEmpty;
+    final hasSelection = _selectedPhotoIds.isNotEmpty && !_isLoadingBatch;
     final hasCopied = CopiedSettingsHelper.hasCopiedParameters;
 
     return Container(
@@ -964,14 +965,13 @@ class _LibraryPageState extends State<LibraryPage> {
 
         final photo = activePhotos.firstWhere((p) => p.id == id);
         final sessionResult = await sl<EditorRepository>().getSession(id);
-
-        final session = await sessionResult.fold(
-          (failure) async {
-            final startResult = await sl<EditorRepository>().startSession(id, photo.path);
-            return startResult.fold((_) => null, (s) => s);
-          },
-          (s) => s,
-        );
+        EditSession? session;
+        if (sessionResult.isRight) {
+          session = sessionResult.rightOrNull;
+        } else {
+          final startResult = await sl<EditorRepository>().startSession(id, photo.path);
+          session = startResult.rightOrNull;
+        }
 
         if (session != null) {
           final updatedSession = session.copyWith(currentParameters: preset.parameters);
@@ -1024,14 +1024,13 @@ class _LibraryPageState extends State<LibraryPage> {
 
         final photo = activePhotos.firstWhere((p) => p.id == id);
         final sessionResult = await sl<EditorRepository>().getSession(id);
-
-        final session = await sessionResult.fold(
-          (failure) async {
-            final startResult = await sl<EditorRepository>().startSession(id, photo.path);
-            return startResult.fold((_) => null, (s) => s);
-          },
-          (s) => s,
-        );
+        EditSession? session;
+        if (sessionResult.isRight) {
+          session = sessionResult.rightOrNull;
+        } else {
+          final startResult = await sl<EditorRepository>().startSession(id, photo.path);
+          session = startResult.rightOrNull;
+        }
 
         if (session != null) {
           final updatedSession = session.copyWith(currentParameters: params);
