@@ -7,11 +7,17 @@ import 'photo_thumbnail.dart';
 class PhotoGrid extends StatelessWidget {
   final List<Photo> photos;
   final String emptyMessage;
+  final bool isSelectionMode;
+  final Set<String> selectedPhotoIds;
+  final ValueChanged<Photo>? onToggleSelection;
 
   const PhotoGrid({
     super.key,
     required this.photos,
     this.emptyMessage = 'No photos yet',
+    this.isSelectionMode = false,
+    this.selectedPhotoIds = const {},
+    this.onToggleSelection,
   });
 
   @override
@@ -61,7 +67,15 @@ class PhotoGrid extends StatelessWidget {
         childAspectRatio: 1.0,
       ),
       itemBuilder: (context, index) {
-        return PhotoThumbnail(photo: photos[index]);
+        final photo = photos[index];
+        return PhotoThumbnail(
+          photo: photo,
+          isSelectionMode: isSelectionMode,
+          isSelected: selectedPhotoIds.contains(photo.id),
+          onToggleSelection: (selected) {
+            onToggleSelection?.call(photo);
+          },
+        );
       },
     );
   }

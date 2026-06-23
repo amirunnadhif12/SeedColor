@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image/image.dart' as img;
@@ -290,30 +291,25 @@ class EditorRepositoryImpl implements EditorRepository {
         finalImage = await cropPicture.toImage(cropW.toInt(), cropH.toInt());
       }
 
-      // Ambil bytes data pixel dan kompres menggunakan image package
+      // Ambil bytes data pixel dan kompres menggunakan image package di background isolate
       final byteData = await finalImage.toByteData(format: ui.ImageByteFormat.rawRgba);
       if (byteData == null) {
         return Left(UnexpectedFailure(details: 'Gagal mengekstrak data pixel gambar ekspor.'));
       }
 
       final rgbaBytes = byteData.buffer.asUint8List();
-      final imgImage = img.Image.fromBytes(
-        width: finalImage.width,
-        height: finalImage.height,
-        bytes: rgbaBytes.buffer,
-        order: img.ChannelOrder.rgba,
+
+      await compute(
+        _encodeAndSaveImage,
+        ImageEncodingParams(
+          rgbaBytes: rgbaBytes,
+          width: finalImage.width,
+          height: finalImage.height,
+          format: format,
+          quality: quality,
+          outputPath: outputPath,
+        ),
       );
-
-      final List<int> encodedBytes;
-      if (format.toLowerCase() == 'png') {
-        encodedBytes = img.encodePng(imgImage);
-      } else {
-        encodedBytes = img.encodeJpg(imgImage, quality: quality);
-      }
-
-      final file = File(outputPath);
-      await file.parent.create(recursive: true);
-      await file.writeAsBytes(encodedBytes);
 
       return Right(outputPath);
     } catch (e) {
@@ -345,4 +341,42 @@ class EditorRepositoryImpl implements EditorRepository {
     );
     return completer.future;
   }
+}
+
+class ImageEncodingParams {
+  final Uint8List rgbaBytes;
+  final int width;
+  final int height;
+  final String format;
+  final int quality;
+  final String outputPath;
+
+  ImageEncodingParams({
+    required this.rgbaBytes,
+    required this.width,
+    required this.height,
+    required this.format,
+    required this.quality,
+    required this.outputPath,
+  });
+}
+
+Future<void> _encodeAndSaveImage(ImageEncodingParams params) async {
+  final imgImage = img.Image.fromBytes(
+    width: params.width,
+    height: params.height,
+    bytes: params.rgbaBytes.buffer,
+    order: img.ChannelOrder.rgba,
+  );
+
+  final List<int> encodedBytes;
+  if (params.format.toLowerCase() == 'png') {
+    encodedBytes = img.encodePng(imgImage);
+  } else {
+    encodedBytes = img.encodeJpg(imgImage, quality: params.quality);
+  }
+
+  final file = File(params.outputPath);
+  await file.parent.create(recursive: true);
+  await file.writeAsBytes(encodedBytes);
 }

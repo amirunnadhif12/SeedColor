@@ -9,6 +9,7 @@ import '../../../../app/di/injection.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_typography.dart';
 import '../../../../core/utils/math_utils.dart';
+import '../../../../core/utils/copied_settings_helper.dart';
 import '../../../../core/widgets/loading_overlay.dart';
 import '../../domain/entities/curve_data.dart';
 import '../../domain/entities/edit_parameters.dart';
@@ -18,6 +19,7 @@ import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
 import '../widgets/adjustment_panel.dart';
 import '../widgets/image_canvas.dart';
+import '../widgets/compare_canvas.dart';
 import '../widgets/tool_selector.dart';
 import '../widgets/panels/light_panel.dart';
 import '../widgets/panels/color_panel.dart';
@@ -141,10 +143,14 @@ class _EditorPageState extends State<EditorPage>
   ui.Image? _testImage;
   ui.Image? _maskedImage;
   ui.Image? _lutImage;
+  ui.Image? _identityLutImage;
   ui.FragmentShader? _shader;
   bool _isLoading = true;
   bool _isFavorite = false;
   int _rating = 0;
+
+  bool _showCompare = false;
+  double _compareDragRatio = 0.5;
 
   final List<ToolItem> _tools = [
     const ToolItem(Icons.style_rounded, 'Presets', Color(0xFF00E6FF)),
@@ -305,6 +311,7 @@ class _EditorPageState extends State<EditorPage>
 
       // 3. Create LUT from current curve data
       _lutImage = await _generateLutImage(_currentCurveData);
+      _identityLutImage = await _generateLutImage(CurveData.identity());
 
       // 4. Load shader (composite.frag)
       final ui.FragmentProgram program = await ui.FragmentProgram.fromAsset(
@@ -635,6 +642,19 @@ class _EditorPageState extends State<EditorPage>
             tooltip: 'Redo',
           ),
           IconButton(
+            icon: Icon(
+              _showCompare ? Icons.compare_rounded : Icons.difference_rounded,
+              size: 20,
+              color: _showCompare ? AppColors.primary : AppColors.textPrimary,
+            ),
+            onPressed: () {
+              setState(() {
+                _showCompare = !_showCompare;
+              });
+            },
+            tooltip: 'Bandingkan Sebelum/Sesudah',
+          ),
+          IconButton(
             icon: const Icon(Icons.ios_share_rounded, size: 20),
             color: AppColors.textPrimary,
             onPressed: () {
@@ -649,6 +669,74 @@ class _EditorPageState extends State<EditorPage>
               }
             },
             tooltip: 'Export',
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded, size: 20),
+            color: AppColors.backgroundPanel,
+            onSelected: (value) {
+              if (value == 'copy') {
+                if (state.session != null) {
+                  CopiedSettingsHelper.copy(state.session!.currentParameters);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Pengaturan edit berhasil disalin'),
+                      backgroundColor: AppColors.primary,
+                    ),
+                  );
+                }
+              } else if (value == 'paste') {
+                if (CopiedSettingsHelper.hasCopiedParameters) {
+                  bloc.add(ApplyPreset(CopiedSettingsHelper.copiedParameters!));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Pengaturan edit berhasil ditempel'),
+                      backgroundColor: AppColors.primary,
+                    ),
+                  );
+                }
+              } else if (value == 'reset') {
+                bloc.add(ResetAll());
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'copy',
+                child: Row(
+                  children: [
+                    Icon(Icons.copy_rounded, color: Colors.white70, size: 18),
+                    SizedBox(width: 8),
+                    Text('Salin Pengaturan', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'paste',
+                enabled: CopiedSettingsHelper.hasCopiedParameters,
+                child: Row(
+                  children: [
+                    Icon(Icons.paste_rounded,
+                         color: CopiedSettingsHelper.hasCopiedParameters ? Colors.white70 : Colors.white24,
+                         size: 18),
+                    SizedBox(width: 8),
+                    Text('Tempel Pengaturan',
+                         style: TextStyle(
+                           color: CopiedSettingsHelper.hasCopiedParameters ? Colors.white : Colors.white30,
+                         )),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(height: 1),
+              const PopupMenuItem<String>(
+                value: 'reset',
+                child: Row(
+                  children: [
+                    Icon(Icons.restart_alt_rounded, color: Colors.redAccent, size: 18),
+                    SizedBox(width: 8),
+                    Text('Reset Semua', style: TextStyle(color: Colors.redAccent)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -840,49 +928,98 @@ class _EditorPageState extends State<EditorPage>
     // Load masked hiker image if masking is active (Screen 3)
     final imageToRender = (_currentToolLabel == 'Masking') ? (_maskedImage ?? _testImage!) : _testImage!;
 
-    final canvasWidget = ImageCanvas(
-      image: imageToRender,
-      lutImage: _lutImage!,
-      shader: _shader!,
-      // Dynamically select values depending on tool
-      exposure: _currentToolLabel == 'Masking'
-          ? (_maskingValues['Exposure'] ?? 0.0)
-          : (_lightValues['Exposure'] ?? 0.0),
-      contrast: _currentToolLabel == 'Masking'
-          ? (_maskingValues['Contrast'] ?? 0.0)
-          : (_lightValues['Contrast'] ?? 0.0),
-      highlights: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Highlights'] ?? 0.0),
-      shadows: _currentToolLabel == 'Masking'
-          ? (_maskingValues['Shadows'] ?? 0.0)
-          : (_lightValues['Shadows'] ?? 0.0),
-      whites: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Whites'] ?? 0.0),
-      blacks: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Blacks'] ?? 0.0),
-      temperature: _colorValues['Temperature'] ?? 0.0,
-      tint: _colorValues['Tint'] ?? 0.0,
-      vibrance: _colorValues['Vibrance'] ?? 0.0,
-      saturation: _currentToolLabel == 'Masking'
-          ? (_maskingValues['Saturation'] ?? 0.0)
-          : (_colorValues['Saturation'] ?? 0.0),
-      hslAdjustments: _hslAdjustments,
-      textureAdjust: _effectsValues['Texture'] ?? 0.0,
-      clarity: _effectsValues['Clarity'] ?? 0.0,
-      dehaze: _effectsValues['Dehaze'] ?? 0.0,
-      vignette: _effectsValues['Vignette'] ?? 0.0,
-      grain: _effectsValues['Grain'] ?? 0.0,
-      sharpeningAmount: _detailValues['Sharpening'] ?? 40.0,
-      sharpeningRadius: _detailValues['Radius'] ?? 1.0,
-      sharpeningDetail: _detailValues['Detail'] ?? 25.0,
-      sharpeningMasking: _detailValues['Masking'] ?? 0.0,
-      luminanceNR: _detailValues['Luminance NR'] ?? 0.0,
-      colorNR: _detailValues['Color NR'] ?? 25.0,
-      removeChromaticAberration: _removeChromaticAberration,
-      enableLensCorrection: _enableLensCorrection,
-      shadowsColor: _hueSatToRgbVec3(_shadowsHue, _shadowsSat),
-      midtonesColor: _hueSatToRgbVec3(_midtonesHue, _midtonesSat),
-      highlightsColor: _hueSatToRgbVec3(_highlightsHue, _highlightsSat),
-      cgBlending: _cgBlending,
-      cgBalance: _cgBalance,
-    );
+    final canvasWidget = _showCompare
+        ? CompareCanvas(
+            image: imageToRender,
+            lutImage: _lutImage!,
+            identityLutImage: _identityLutImage ?? _lutImage!,
+            shader: _shader!,
+            dragRatio: _compareDragRatio,
+            onDragUpdate: (ratio) {
+              setState(() {
+                _compareDragRatio = ratio;
+              });
+            },
+            exposure: _currentToolLabel == 'Masking'
+                ? (_maskingValues['Exposure'] ?? 0.0)
+                : (_lightValues['Exposure'] ?? 0.0),
+            contrast: _currentToolLabel == 'Masking'
+                ? (_maskingValues['Contrast'] ?? 0.0)
+                : (_lightValues['Contrast'] ?? 0.0),
+            highlights: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Highlights'] ?? 0.0),
+            shadows: _currentToolLabel == 'Masking'
+                ? (_maskingValues['Shadows'] ?? 0.0)
+                : (_lightValues['Shadows'] ?? 0.0),
+            whites: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Whites'] ?? 0.0),
+            blacks: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Blacks'] ?? 0.0),
+            temperature: _colorValues['Temperature'] ?? 0.0,
+            tint: _colorValues['Tint'] ?? 0.0,
+            vibrance: _colorValues['Vibrance'] ?? 0.0,
+            saturation: _currentToolLabel == 'Masking'
+                ? (_maskingValues['Saturation'] ?? 0.0)
+                : (_colorValues['Saturation'] ?? 0.0),
+            hslAdjustments: _hslAdjustments,
+            textureAdjust: _effectsValues['Texture'] ?? 0.0,
+            clarity: _effectsValues['Clarity'] ?? 0.0,
+            dehaze: _effectsValues['Dehaze'] ?? 0.0,
+            vignette: _effectsValues['Vignette'] ?? 0.0,
+            grain: _effectsValues['Grain'] ?? 0.0,
+            sharpeningAmount: _detailValues['Sharpening'] ?? 40.0,
+            sharpeningRadius: _detailValues['Radius'] ?? 1.0,
+            sharpeningDetail: _detailValues['Detail'] ?? 25.0,
+            sharpeningMasking: _detailValues['Masking'] ?? 0.0,
+            luminanceNR: _detailValues['Luminance NR'] ?? 0.0,
+            colorNR: _detailValues['Color NR'] ?? 25.0,
+            removeChromaticAberration: _removeChromaticAberration,
+            enableLensCorrection: _enableLensCorrection,
+            shadowsColor: _hueSatToRgbVec3(_shadowsHue, _shadowsSat),
+            midtonesColor: _hueSatToRgbVec3(_midtonesHue, _midtonesSat),
+            highlightsColor: _hueSatToRgbVec3(_highlightsHue, _highlightsSat),
+            cgBlending: _cgBlending,
+            cgBalance: _cgBalance,
+          )
+        : ImageCanvas(
+            image: imageToRender,
+            lutImage: _lutImage!,
+            shader: _shader!,
+            exposure: _currentToolLabel == 'Masking'
+                ? (_maskingValues['Exposure'] ?? 0.0)
+                : (_lightValues['Exposure'] ?? 0.0),
+            contrast: _currentToolLabel == 'Masking'
+                ? (_maskingValues['Contrast'] ?? 0.0)
+                : (_lightValues['Contrast'] ?? 0.0),
+            highlights: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Highlights'] ?? 0.0),
+            shadows: _currentToolLabel == 'Masking'
+                ? (_maskingValues['Shadows'] ?? 0.0)
+                : (_lightValues['Shadows'] ?? 0.0),
+            whites: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Whites'] ?? 0.0),
+            blacks: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Blacks'] ?? 0.0),
+            temperature: _colorValues['Temperature'] ?? 0.0,
+            tint: _colorValues['Tint'] ?? 0.0,
+            vibrance: _colorValues['Vibrance'] ?? 0.0,
+            saturation: _currentToolLabel == 'Masking'
+                ? (_maskingValues['Saturation'] ?? 0.0)
+                : (_colorValues['Saturation'] ?? 0.0),
+            hslAdjustments: _hslAdjustments,
+            textureAdjust: _effectsValues['Texture'] ?? 0.0,
+            clarity: _effectsValues['Clarity'] ?? 0.0,
+            dehaze: _effectsValues['Dehaze'] ?? 0.0,
+            vignette: _effectsValues['Vignette'] ?? 0.0,
+            grain: _effectsValues['Grain'] ?? 0.0,
+            sharpeningAmount: _detailValues['Sharpening'] ?? 40.0,
+            sharpeningRadius: _detailValues['Radius'] ?? 1.0,
+            sharpeningDetail: _detailValues['Detail'] ?? 25.0,
+            sharpeningMasking: _detailValues['Masking'] ?? 0.0,
+            luminanceNR: _detailValues['Luminance NR'] ?? 0.0,
+            colorNR: _detailValues['Color NR'] ?? 25.0,
+            removeChromaticAberration: _removeChromaticAberration,
+            enableLensCorrection: _enableLensCorrection,
+            shadowsColor: _hueSatToRgbVec3(_shadowsHue, _shadowsSat),
+            midtonesColor: _hueSatToRgbVec3(_midtonesHue, _midtonesSat),
+            highlightsColor: _hueSatToRgbVec3(_highlightsHue, _highlightsSat),
+            cgBlending: _cgBlending,
+            cgBalance: _cgBalance,
+          );
 
     // Apply 3D Perspective, Flip, and Rotation
     final double tiltX = _perspectiveVertical * 0.005;

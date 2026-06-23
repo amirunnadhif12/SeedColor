@@ -149,7 +149,7 @@ class ImageCanvas extends StatelessWidget {
 
 /// CustomPainter untuk merender shader pada kanvas
 class ShaderPainter extends CustomPainter {
-  final ui.FragmentShader shader;
+  final ui.FragmentShader? shader;
   final ui.Image image;
   final ui.Image lutImage;
 
@@ -228,99 +228,117 @@ class ShaderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final s = shader;
+    if (s == null) {
+      try {
+        canvas.drawImageRect(
+          image,
+          Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Paint(),
+        );
+      } catch (e) {
+        // Fallback for tests where FakeImage cannot be painted natively
+        canvas.drawRect(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Paint()..color = const Color(0xFF2E2E2E),
+        );
+      }
+      return;
+    }
     // 0. Set canvas size
-    shader.setFloat(0, size.width);
-    shader.setFloat(1, size.height);
+    s.setFloat(0, size.width);
+    s.setFloat(1, size.height);
 
     // 1. Light Adjustments (Exposure, Contrast, Highlights, Shadows, Whites, Blacks)
-    shader.setFloat(2, exposure);
-    shader.setFloat(3, contrast);
-    shader.setFloat(4, highlights);
-    shader.setFloat(5, shadows);
-    shader.setFloat(6, whites);
-    shader.setFloat(7, blacks);
+    s.setFloat(2, exposure);
+    s.setFloat(3, contrast);
+    s.setFloat(4, highlights);
+    s.setFloat(5, shadows);
+    s.setFloat(6, whites);
+    s.setFloat(7, blacks);
 
     // 2. Color Adjustments (Temperature, Tint, Vibrance, Saturation)
-    shader.setFloat(8, temperature);
-    shader.setFloat(9, tint);
-    shader.setFloat(10, vibrance);
-    shader.setFloat(11, saturation);
+    s.setFloat(8, temperature);
+    s.setFloat(9, tint);
+    s.setFloat(10, vibrance);
+    s.setFloat(11, saturation);
 
     // HSL Mixer (24 floats, indexes 12 to 35)
     // Red (12-14)
-    shader.setFloat(12, hslAdjustments.red.hue);
-    shader.setFloat(13, hslAdjustments.red.saturation);
-    shader.setFloat(14, hslAdjustments.red.lightness);
+    s.setFloat(12, hslAdjustments.red.hue);
+    s.setFloat(13, hslAdjustments.red.saturation);
+    s.setFloat(14, hslAdjustments.red.lightness);
     // Orange (15-17)
-    shader.setFloat(15, hslAdjustments.orange.hue);
-    shader.setFloat(16, hslAdjustments.orange.saturation);
-    shader.setFloat(17, hslAdjustments.orange.lightness);
+    s.setFloat(15, hslAdjustments.orange.hue);
+    s.setFloat(16, hslAdjustments.orange.saturation);
+    s.setFloat(17, hslAdjustments.orange.lightness);
     // Yellow (18-20)
-    shader.setFloat(18, hslAdjustments.yellow.hue);
-    shader.setFloat(19, hslAdjustments.yellow.saturation);
-    shader.setFloat(20, hslAdjustments.yellow.lightness);
+    s.setFloat(18, hslAdjustments.yellow.hue);
+    s.setFloat(19, hslAdjustments.yellow.saturation);
+    s.setFloat(20, hslAdjustments.yellow.lightness);
     // Green (21-23)
-    shader.setFloat(21, hslAdjustments.green.hue);
-    shader.setFloat(22, hslAdjustments.green.saturation);
-    shader.setFloat(23, hslAdjustments.green.lightness);
+    s.setFloat(21, hslAdjustments.green.hue);
+    s.setFloat(22, hslAdjustments.green.saturation);
+    s.setFloat(23, hslAdjustments.green.lightness);
     // Aqua (24-26)
-    shader.setFloat(24, hslAdjustments.aqua.hue);
-    shader.setFloat(25, hslAdjustments.aqua.saturation);
-    shader.setFloat(26, hslAdjustments.aqua.lightness);
+    s.setFloat(24, hslAdjustments.aqua.hue);
+    s.setFloat(25, hslAdjustments.aqua.saturation);
+    s.setFloat(26, hslAdjustments.aqua.lightness);
     // Blue (27-29)
-    shader.setFloat(27, hslAdjustments.blue.hue);
-    shader.setFloat(28, hslAdjustments.blue.saturation);
-    shader.setFloat(29, hslAdjustments.blue.lightness);
+    s.setFloat(27, hslAdjustments.blue.hue);
+    s.setFloat(28, hslAdjustments.blue.saturation);
+    s.setFloat(29, hslAdjustments.blue.lightness);
     // Purple (30-32)
-    shader.setFloat(30, hslAdjustments.purple.hue);
-    shader.setFloat(31, hslAdjustments.purple.saturation);
-    shader.setFloat(32, hslAdjustments.purple.lightness);
+    s.setFloat(30, hslAdjustments.purple.hue);
+    s.setFloat(31, hslAdjustments.purple.saturation);
+    s.setFloat(32, hslAdjustments.purple.lightness);
     // Magenta (33-35)
-    shader.setFloat(33, hslAdjustments.magenta.hue);
-    shader.setFloat(34, hslAdjustments.magenta.saturation);
-    shader.setFloat(35, hslAdjustments.magenta.lightness);
+    s.setFloat(33, hslAdjustments.magenta.hue);
+    s.setFloat(34, hslAdjustments.magenta.saturation);
+    s.setFloat(35, hslAdjustments.magenta.lightness);
 
     // 3. Effects (Texture, Clarity, Dehaze, Vignette, Grain)
-    shader.setFloat(36, textureAdjust);
-    shader.setFloat(37, clarity);
-    shader.setFloat(38, dehaze);
-    shader.setFloat(39, vignette);
-    shader.setFloat(40, grain);
+    s.setFloat(36, textureAdjust);
+    s.setFloat(37, clarity);
+    s.setFloat(38, dehaze);
+    s.setFloat(39, vignette);
+    s.setFloat(40, grain);
 
     // 4. Color Grading (ShadowsColor, MidtonesColor, HighlightsColor, Blending, Balance)
     // Shadows RGB tint (41, 42, 43)
-    shader.setFloat(41, shadowsColor[0]);
-    shader.setFloat(42, shadowsColor[1]);
-    shader.setFloat(43, shadowsColor[2]);
+    s.setFloat(41, shadowsColor[0]);
+    s.setFloat(42, shadowsColor[1]);
+    s.setFloat(43, shadowsColor[2]);
     // Midtones RGB tint (44, 45, 46)
-    shader.setFloat(44, midtonesColor[0]);
-    shader.setFloat(45, midtonesColor[1]);
-    shader.setFloat(46, midtonesColor[2]);
+    s.setFloat(44, midtonesColor[0]);
+    s.setFloat(45, midtonesColor[1]);
+    s.setFloat(46, midtonesColor[2]);
     // Highlights RGB tint (47, 48, 49)
-    shader.setFloat(47, highlightsColor[0]);
-    shader.setFloat(48, highlightsColor[1]);
-    shader.setFloat(49, highlightsColor[2]);
+    s.setFloat(47, highlightsColor[0]);
+    s.setFloat(48, highlightsColor[1]);
+    s.setFloat(49, highlightsColor[2]);
     // Blending (50) - normalisasi 0-100 ke 0-1
-    shader.setFloat(50, cgBlending / 100.0);
+    s.setFloat(50, cgBlending / 100.0);
     // Balance (51) - normalisasi -100-100 ke -1.0-1.0
-    shader.setFloat(51, cgBalance / 100.0);
+    s.setFloat(51, cgBalance / 100.0);
 
     // 5. Detail & Optics (indexes 52 to 59)
-    shader.setFloat(52, sharpeningAmount);
-    shader.setFloat(53, sharpeningRadius);
-    shader.setFloat(54, sharpeningDetail);
-    shader.setFloat(55, sharpeningMasking);
-    shader.setFloat(56, luminanceNR);
-    shader.setFloat(57, colorNR);
-    shader.setFloat(58, removeChromaticAberration ? 1.0 : 0.0);
-    shader.setFloat(59, enableLensCorrection ? 1.0 : 0.0);
+    s.setFloat(52, sharpeningAmount);
+    s.setFloat(53, sharpeningRadius);
+    s.setFloat(54, sharpeningDetail);
+    s.setFloat(55, sharpeningMasking);
+    s.setFloat(56, luminanceNR);
+    s.setFloat(57, colorNR);
+    s.setFloat(58, removeChromaticAberration ? 1.0 : 0.0);
+    s.setFloat(59, enableLensCorrection ? 1.0 : 0.0);
 
     // Bind Samplers
-    shader.setImageSampler(0, image);
-    shader.setImageSampler(1, lutImage);
+    s.setImageSampler(0, image);
+    s.setImageSampler(1, lutImage);
 
     // Draw rect covering the size bounds with shader paint
-    final paint = Paint()..shader = shader;
+    final paint = Paint()..shader = s;
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
   }
 

@@ -8,16 +8,29 @@ import '../bloc/library_event.dart';
 
 class PhotoThumbnail extends StatelessWidget {
   final Photo photo;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final ValueChanged<bool>? onToggleSelection;
 
-  const PhotoThumbnail({super.key, required this.photo});
+  const PhotoThumbnail({
+    super.key,
+    required this.photo,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onToggleSelection,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.push('/editor/${photo.id}');
+        if (isSelectionMode) {
+          onToggleSelection?.call(!isSelected);
+        } else {
+          context.push('/editor/${photo.id}');
+        }
       },
-      onLongPress: () => _showActionsBottomSheet(context),
+      onLongPress: isSelectionMode ? null : () => _showActionsBottomSheet(context),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Stack(
@@ -51,6 +64,30 @@ class PhotoThumbnail extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Selection Circle/Checkmark Overlay
+            if (isSelectionMode)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF0A84FF) : Colors.black45,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFF0A84FF) : Colors.white70,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.check_rounded,
+                    color: isSelected ? Colors.white : Colors.transparent,
+                    size: 12,
+                  ),
+                ),
+              ),
 
             // Top-right: Favorite Heart
             if (photo.isFavorite)
