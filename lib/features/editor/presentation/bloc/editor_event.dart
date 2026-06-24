@@ -216,3 +216,13 @@ class DeleteSnapshot extends EditorEvent {
   @override
   List<Object?> get props => [id];
 }
+
+/// Memperbarui masker penyesuaian lokal
+class UpdateMasks extends EditorEvent {
+  final EditParameters parameters;
+
+  const UpdateMasks(this.parameters);
+
+  @override
+  List<Object?> get props => [parameters];
+}

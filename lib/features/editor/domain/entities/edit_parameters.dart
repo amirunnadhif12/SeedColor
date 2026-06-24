@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'curve_data.dart';
 import 'hsl_adjustments.dart';
+import 'mask_model.dart';
 
 /// 🌱 SeedColor — Edit Parameters
 ///
@@ -76,6 +77,10 @@ class EditParameters extends Equatable {
   final double lutIntensity; // 0.0 s.d. 1.0
   final double lutSize;      // misal 33.0, atau 0.0 jika dinonaktifkan
 
+  // ─── Masking Panel ───────────────────────────────────
+  final List<MaskModel> masks;
+  final String? activeMaskId;
+
   const EditParameters({
     this.exposure = 0.0,
     this.contrast = 0.0,
@@ -92,12 +97,12 @@ class EditParameters extends Equatable {
     this.dehaze = 0.0,
     this.vignette = 0.0,
     this.grain = 0.0,
-    this.sharpeningAmount = 40.0,
-    this.sharpeningRadius = 1.0,
-    this.sharpeningDetail = 25.0,
+    this.sharpeningAmount = 0.0,
+    this.sharpeningRadius = 0.0,
+    this.sharpeningDetail = 0.0,
     this.sharpeningMasking = 0.0,
     this.luminanceNR = 0.0,
-    this.colorNR = 25.0,
+    this.colorNR = 0.0,
     this.removeChromaticAberration = false,
     this.enableLensCorrection = false,
     this.cropLeft = 0.0,
@@ -123,6 +128,8 @@ class EditParameters extends Equatable {
     this.lutPath,
     this.lutIntensity = 1.0,
     this.lutSize = 0.0,
+    this.masks = const [],
+    this.activeMaskId,
   });
 
   /// factory untuk inisialisasi default / identitas filter kosong
@@ -133,6 +140,8 @@ class EditParameters extends Equatable {
       lutPath: null,
       lutIntensity: 1.0,
       lutSize: 0.0,
+      masks: const [],
+      activeMaskId: null,
     );
   }
 
@@ -183,6 +192,9 @@ class EditParameters extends Equatable {
     String? lutPath,
     double? lutIntensity,
     double? lutSize,
+    List<MaskModel>? masks,
+    String? activeMaskId,
+    bool clearActiveMask = false,
   }) {
     return EditParameters(
       exposure: exposure ?? this.exposure,
@@ -231,6 +243,8 @@ class EditParameters extends Equatable {
       lutPath: lutPath ?? this.lutPath,
       lutIntensity: lutIntensity ?? this.lutIntensity,
       lutSize: lutSize ?? this.lutSize,
+      masks: masks ?? this.masks,
+      activeMaskId: clearActiveMask ? null : (activeMaskId ?? this.activeMaskId),
     );
   }
 
@@ -282,5 +296,7 @@ class EditParameters extends Equatable {
         lutPath,
         lutIntensity,
         lutSize,
+        masks,
+        activeMaskId,
       ];
 }

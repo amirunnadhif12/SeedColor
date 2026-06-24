@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/di/injection.dart';
 import '../../../../app/theme/app_colors.dart';
@@ -33,6 +34,9 @@ import '../widgets/panels/geometry_panel.dart';
 import '../widgets/panels/presets_panel.dart';
 import '../widgets/panels/history_panel.dart';
 import '../widgets/panels/lut_panel.dart';
+import '../widgets/panels/masking_panel.dart';
+import '../../domain/entities/mask_model.dart';
+import '../../data/datasources/mask_texture_generator.dart';
 import '../../data/datasources/lut_parser.dart';
 import '../../../export/presentation/widgets/export_dialog.dart';
 import 'package:drift/drift.dart' as drift;
@@ -143,7 +147,6 @@ class _EditorPageState extends State<EditorPage>
 
   // Resources for shader preview
   ui.Image? _testImage;
-  ui.Image? _maskedImage;
   ui.Image? _lutImage;
   ui.Image? _identityLutImage;
   ui.FragmentShader? _shader;
@@ -158,6 +161,17 @@ class _EditorPageState extends State<EditorPage>
   String? _loadedLutPath;
   ui.Image? _custom3dLutImage;
   bool _isLutLoading = false;
+
+  // Masking Support
+  bool _showMaskOverlay = true;
+  ui.Image? _customMaskTexture;
+  bool _isMaskGenerating = false;
+  Offset? _currentBrushPoint;
+  final double _currentBrushRadius = 0.04;
+  String? _draggedHandle;
+  Offset? _linearStartTemp;
+  Offset? _radialCenterTemp;
+  EditParameters? _tempParameters;
 
   final List<ToolItem> _tools = [
     const ToolItem(Icons.style_rounded, 'Presets', Color(0xFF00E6FF)),
@@ -219,12 +233,12 @@ class _EditorPageState extends State<EditorPage>
 
   // ─── Detail Panel Sliders ────────────────────────────
   final Map<String, double> _detailValues = {
-    'Sharpening': 40,
-    'Radius': 1,
-    'Detail': 25,
+    'Sharpening': 0,
+    'Radius': 0,
+    'Detail': 0,
     'Masking': 0,
     'Luminance NR': 0,
-    'Color NR': 25,
+    'Color NR': 0,
   };
 
   // ─── Optics Panel Toggles ────────────────────────────
@@ -310,14 +324,7 @@ class _EditorPageState extends State<EditorPage>
       final ui.FrameInfo fi = await codec.getNextFrame();
       _testImage = fi.image;
 
-      // 2. Load masked mountain lake image
-      final ByteData maskedData = await rootBundle.load('assets/images/mountain_lake_masked.png');
-      final Uint8List maskedList = maskedData.buffer.asUint8List();
-      final ui.Codec maskedCodec = await ui.instantiateImageCodec(maskedList);
-      final ui.FrameInfo maskedFi = await maskedCodec.getNextFrame();
-      _maskedImage = maskedFi.image;
-
-      // 3. Create LUT from current curve data
+      // 2. Create LUT from current curve data
       _lutImage = await _generateLutImage(_currentCurveData);
       _identityLutImage = await _generateLutImage(CurveData.identity());
 
@@ -443,6 +450,241 @@ class _EditorPageState extends State<EditorPage>
     return [rgb[0] * s, rgb[1] * s, rgb[2] * s];
   }
 
+  Future<void> _regenerateMaskTexture(MaskModel mask) async {
+    if (_isMaskGenerating) return;
+    _isMaskGenerating = true;
+    try {
+      final img = await MaskTextureGenerator.generate(
+        mask: mask,
+        size: const Size(512, 512),
+        baseImage: _testImage,
+      );
+      if (mounted) {
+        setState(() {
+          _customMaskTexture = img;
+        });
+      }
+    } catch (e) {
+      debugPrint('Gagal generate mask texture: $e');
+    } finally {
+      _isMaskGenerating = false;
+    }
+  }
+
+  void _addMaskDirectly(MaskType type) {
+    final params = _tempParameters ?? context.read<EditorBloc>().state.session?.currentParameters;
+    if (params == null) return;
+    
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final name = _getDefaultMaskName(type, params.masks.length + 1);
+
+    final newMask = MaskModel(
+      id: id,
+      name: name,
+      type: type,
+      linearStart: type == MaskType.linear ? const Offset(0.5, 0.25) : null,
+      linearEnd: type == MaskType.linear ? const Offset(0.5, 0.75) : null,
+      radialCenter: type == MaskType.radial ? const Offset(0.5, 0.5) : null,
+      radialRadiusX: type == MaskType.radial ? 0.18 : 0.15,
+      radialRadiusY: type == MaskType.radial ? 0.18 : 0.15,
+    );
+
+    final updatedMasks = List<MaskModel>.from(params.masks)..add(newMask);
+    final updated = params.copyWith(masks: updatedMasks, activeMaskId: id);
+    
+    setState(() {
+      _tempParameters = updated;
+    });
+    
+    _regenerateMaskTexture(newMask);
+    context.read<EditorBloc>().add(UpdateMasks(updated));
+  }
+
+  String _getDefaultMaskName(MaskType type, int count) {
+    switch (type) {
+      case MaskType.brush: return 'Kuas $count';
+      case MaskType.linear: return 'Gradien Linier $count';
+      case MaskType.radial: return 'Gradien Radial $count';
+      case MaskType.subject: return 'AI Subjek $count';
+      case MaskType.sky: return 'AI Langit $count';
+    }
+  }
+
+  void _handleMaskPanStart(DragStartDetails details, Size canvasSize, Offset leftTopOffset) {
+    final params = _tempParameters ?? context.read<EditorBloc>().state.session?.currentParameters;
+    if (params == null) return;
+    
+    final activeId = params.activeMaskId;
+    if (activeId == null) return;
+
+    final activeMask = params.masks.firstWhere((m) => m.id == activeId, orElse: () => const MaskModel(id: '', name: '', type: MaskType.brush));
+    if (activeMask.id.isEmpty) return;
+
+    final localPos = details.localPosition - leftTopOffset;
+    final normPos = Offset(
+      localPos.dx.clamp(0.0, canvasSize.width) / canvasSize.width,
+      localPos.dy.clamp(0.0, canvasSize.height) / canvasSize.height,
+    );
+
+    if (activeMask.type == MaskType.brush) {
+      final newStroke = BrushStroke(
+        points: [normPos],
+        radius: _currentBrushRadius,
+        hardness: 0.5,
+        opacity: 1.0,
+      );
+      final updatedStrokes = List<BrushStroke>.from(activeMask.strokes)..add(newStroke);
+      final updatedMask = activeMask.copyWith(strokes: updatedStrokes);
+      _updateActiveMaskLocally(params, updatedMask);
+    } else if (activeMask.type == MaskType.linear) {
+      final startDist = (activeMask.linearStart! - normPos).distance;
+      final endDist = (activeMask.linearEnd! - normPos).distance;
+      final midPoint = (activeMask.linearStart! + activeMask.linearEnd!) / 2;
+      final midDist = (midPoint - normPos).distance;
+
+      if (startDist < 0.08) {
+        _draggedHandle = 'start';
+      } else if (endDist < 0.08) {
+        _draggedHandle = 'end';
+      } else if (midDist < 0.08) {
+        _draggedHandle = 'center';
+      } else {
+        _draggedHandle = 'new';
+        _linearStartTemp = normPos;
+        final updatedMask = activeMask.copyWith(linearStart: normPos, linearEnd: normPos);
+        _updateActiveMaskLocally(params, updatedMask);
+      }
+    } else if (activeMask.type == MaskType.radial) {
+      final center = activeMask.radialCenter!;
+      final centerDist = (center - normPos).distance;
+      
+      final edgeX = center + Offset(activeMask.radialRadiusX, 0);
+      final edgeY = center + Offset(0, activeMask.radialRadiusY);
+      final distEdgeX = (edgeX - normPos).distance;
+      final distEdgeY = (edgeY - normPos).distance;
+
+      if (centerDist < 0.08) {
+        _draggedHandle = 'center';
+      } else if (distEdgeX < 0.08) {
+        _draggedHandle = 'radiusX';
+      } else if (distEdgeY < 0.08) {
+        _draggedHandle = 'radiusY';
+      } else {
+        _draggedHandle = 'new';
+        _radialCenterTemp = normPos;
+        final updatedMask = activeMask.copyWith(
+          radialCenter: normPos,
+          radialRadiusX: 0.01,
+          radialRadiusY: 0.01,
+        );
+        _updateActiveMaskLocally(params, updatedMask);
+      }
+    }
+  }
+
+  void _handleMaskPanUpdate(DragUpdateDetails details, Size canvasSize, Offset leftTopOffset) {
+    final params = _tempParameters ?? context.read<EditorBloc>().state.session?.currentParameters;
+    if (params == null) return;
+    
+    final activeId = params.activeMaskId;
+    if (activeId == null) return;
+
+    final activeMask = params.masks.firstWhere((m) => m.id == activeId, orElse: () => const MaskModel(id: '', name: '', type: MaskType.brush));
+    if (activeMask.id.isEmpty) return;
+
+    final localPos = details.localPosition - leftTopOffset;
+    final normPos = Offset(
+      localPos.dx.clamp(0.0, canvasSize.width) / canvasSize.width,
+      localPos.dy.clamp(0.0, canvasSize.height) / canvasSize.height,
+    );
+
+    if (activeMask.type == MaskType.brush) {
+      if (activeMask.strokes.isNotEmpty) {
+        setState(() {
+          _currentBrushPoint = normPos;
+        });
+        final lastStroke = activeMask.strokes.last;
+        final updatedPoints = List<Offset>.from(lastStroke.points)..add(normPos);
+        final updatedStroke = BrushStroke(
+          points: updatedPoints,
+          radius: lastStroke.radius,
+          hardness: lastStroke.hardness,
+          opacity: lastStroke.opacity,
+        );
+        final updatedStrokes = List<BrushStroke>.from(activeMask.strokes)
+          ..[activeMask.strokes.length - 1] = updatedStroke;
+        final updatedMask = activeMask.copyWith(strokes: updatedStrokes);
+        _updateActiveMaskLocally(params, updatedMask);
+      }
+    } else if (activeMask.type == MaskType.linear) {
+      if (_draggedHandle == 'start') {
+        final updatedMask = activeMask.copyWith(linearStart: normPos);
+        _updateActiveMaskLocally(params, updatedMask);
+      } else if (_draggedHandle == 'end') {
+        final updatedMask = activeMask.copyWith(linearEnd: normPos);
+        _updateActiveMaskLocally(params, updatedMask);
+      } else if (_draggedHandle == 'center') {
+        final currentMid = (activeMask.linearStart! + activeMask.linearEnd!) / 2;
+        final delta = normPos - currentMid;
+        final updatedMask = activeMask.copyWith(
+          linearStart: activeMask.linearStart! + delta,
+          linearEnd: activeMask.linearEnd! + delta,
+        );
+        _updateActiveMaskLocally(params, updatedMask);
+      } else if (_draggedHandle == 'new' && _linearStartTemp != null) {
+        final updatedMask = activeMask.copyWith(linearStart: _linearStartTemp, linearEnd: normPos);
+        _updateActiveMaskLocally(params, updatedMask);
+      }
+    } else if (activeMask.type == MaskType.radial) {
+      if (_draggedHandle == 'center') {
+        final updatedMask = activeMask.copyWith(radialCenter: normPos);
+        _updateActiveMaskLocally(params, updatedMask);
+      } else if (_draggedHandle == 'radiusX') {
+        final dist = (normPos - activeMask.radialCenter!).distance;
+        final updatedMask = activeMask.copyWith(radialRadiusX: dist.clamp(0.01, 1.0));
+        _updateActiveMaskLocally(params, updatedMask);
+      } else if (_draggedHandle == 'radiusY') {
+        final dist = (normPos - activeMask.radialCenter!).distance;
+        final updatedMask = activeMask.copyWith(radialRadiusY: dist.clamp(0.01, 1.0));
+        _updateActiveMaskLocally(params, updatedMask);
+      } else if (_draggedHandle == 'new' && _radialCenterTemp != null) {
+        final dist = (normPos - _radialCenterTemp!).distance;
+        final updatedMask = activeMask.copyWith(
+          radialCenter: _radialCenterTemp,
+          radialRadiusX: dist.clamp(0.01, 1.0),
+          radialRadiusY: dist.clamp(0.01, 1.0),
+        );
+        _updateActiveMaskLocally(params, updatedMask);
+      }
+    }
+  }
+
+  void _handleMaskPanEnd(DragEndDetails details) {
+    setState(() {
+      _currentBrushPoint = null;
+    });
+    _draggedHandle = null;
+    _linearStartTemp = null;
+    _radialCenterTemp = null;
+
+    if (_tempParameters != null) {
+      context.read<EditorBloc>().add(UpdateMasks(_tempParameters!));
+    }
+  }
+
+  void _updateActiveMaskLocally(EditParameters params, MaskModel updatedMask) {
+    final updatedMasks = params.masks.map((m) {
+      return m.id == updatedMask.id ? updatedMask : m;
+    }).toList();
+    
+    final updatedParams = params.copyWith(masks: updatedMasks);
+    setState(() {
+      _tempParameters = updatedParams;
+    });
+    
+    _regenerateMaskTexture(updatedMask);
+  }
+
   void _syncLocalValuesFromParams(EditParameters params) {
     _lightValues['Exposure'] = params.exposure;
     _lightValues['Contrast'] = params.contrast;
@@ -532,7 +774,27 @@ class _EditorPageState extends State<EditorPage>
 
         // Sinkronisasi local values dengan state BLoC
         if (state.session != null) {
-          _syncLocalValuesFromParams(state.session!.currentParameters);
+          final params = state.session!.currentParameters;
+          _syncLocalValuesFromParams(params);
+          setState(() {
+            _tempParameters = params;
+          });
+
+          final activeId = params.activeMaskId;
+          final activeMask = activeId != null
+              ? params.masks.firstWhere(
+                  (m) => m.id == activeId,
+                  orElse: () => const MaskModel(id: '', name: '', type: MaskType.brush),
+                )
+              : null;
+
+          if (activeMask != null && activeMask.id.isNotEmpty) {
+            _regenerateMaskTexture(activeMask);
+          } else {
+            setState(() {
+              _customMaskTexture = null;
+            });
+          }
         }
       },
       builder: (context, state) {
@@ -634,7 +896,12 @@ class _EditorPageState extends State<EditorPage>
               tooltip: 'Back',
             )
           else
-            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, size: 22),
+              color: AppColors.textPrimary,
+              onPressed: () => context.go('/library'),
+              tooltip: 'Back',
+            ),
           const Spacer(),
           // Favorite button (only for real photos, not sample)
           if (widget.photoId != 'sample' && widget.photoId.isNotEmpty) ...[
@@ -841,6 +1108,13 @@ class _EditorPageState extends State<EditorPage>
 
   /// Floating vertical masking bar overlay on the right of the image
   Widget _buildMaskingSidebar() {
+    final params = _tempParameters ?? context.read<EditorBloc>().state.session?.currentParameters;
+    final activeId = params?.activeMaskId;
+    final activeMask = activeId != null
+        ? params?.masks.firstWhere((m) => m.id == activeId, orElse: () => const MaskModel(id: '', name: '', type: MaskType.brush))
+        : null;
+    final realActiveMask = (activeMask != null && activeMask.id.isNotEmpty) ? activeMask : null;
+
     return Positioned(
       right: 16,
       top: 0,
@@ -850,7 +1124,7 @@ class _EditorPageState extends State<EditorPage>
         children: [
           // Plus button
           GestureDetector(
-            onTap: () {},
+            onTap: () => _addMaskDirectly(MaskType.brush),
             child: Container(
               width: 38,
               height: 38,
@@ -875,31 +1149,36 @@ class _EditorPageState extends State<EditorPage>
                 _buildFloatingToolItem(
                   icon: Icons.person_outline_rounded,
                   label: 'Subject',
-                  isSelected: true,
+                  isSelected: realActiveMask?.type == MaskType.subject,
+                  onTap: () => _addMaskDirectly(MaskType.subject),
                 ),
                 const SizedBox(height: 12),
                 _buildFloatingToolItem(
                   icon: Icons.cloud_queue_rounded,
                   label: 'Sky',
-                  isSelected: false,
+                  isSelected: realActiveMask?.type == MaskType.sky,
+                  onTap: () => _addMaskDirectly(MaskType.sky),
                 ),
                 const SizedBox(height: 12),
                 _buildFloatingToolItem(
                   icon: Icons.brush_outlined,
                   label: 'Brush',
-                  isSelected: false,
+                  isSelected: realActiveMask?.type == MaskType.brush,
+                  onTap: () => _addMaskDirectly(MaskType.brush),
                 ),
                 const SizedBox(height: 12),
                 _buildFloatingToolItem(
                   icon: Icons.linear_scale_rounded,
                   label: 'Linear',
-                  isSelected: false,
+                  isSelected: realActiveMask?.type == MaskType.linear,
+                  onTap: () => _addMaskDirectly(MaskType.linear),
                 ),
                 const SizedBox(height: 12),
                 _buildFloatingToolItem(
                   icon: Icons.adjust_rounded,
                   label: 'Radial',
-                  isSelected: false,
+                  isSelected: realActiveMask?.type == MaskType.radial,
+                  onTap: () => _addMaskDirectly(MaskType.radial),
                 ),
               ],
             ),
@@ -913,37 +1192,41 @@ class _EditorPageState extends State<EditorPage>
     required IconData icon,
     required String label,
     required bool isSelected,
+    required VoidCallback onTap,
   }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF0A84FF) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isSelected ? const Color(0xFF0A84FF) : Colors.white24,
-              width: 1,
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFF0A84FF) : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected ? const Color(0xFF0A84FF) : Colors.white24,
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.white70,
+              size: 18,
             ),
           ),
-          child: Icon(
-            icon,
-            color: isSelected ? Colors.white : Colors.white70,
-            size: 18,
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? const Color(0xFF0A84FF) : Colors.white38,
+              fontSize: 9,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? const Color(0xFF0A84FF) : Colors.white38,
-            fontSize: 9,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -977,8 +1260,17 @@ class _EditorPageState extends State<EditorPage>
       );
     }
 
-    // Load masked hiker image if masking is active (Screen 3)
-    final imageToRender = (_currentToolLabel == 'Masking') ? (_maskedImage ?? _testImage!) : _testImage!;
+    final imageToRender = _testImage!;
+
+    final activeParams = _tempParameters ?? state.session!.currentParameters;
+    final activeId = activeParams.activeMaskId;
+    final activeMask = activeId != null
+        ? activeParams.masks.firstWhere(
+            (m) => m.id == activeId,
+            orElse: () => const MaskModel(id: '', name: '', type: MaskType.brush),
+          )
+        : null;
+    final realActiveMask = (activeMask != null && activeMask.id.isNotEmpty) ? activeMask : null;
 
     final canvasWidget = _showCompare
         ? CompareCanvas(
@@ -992,36 +1284,28 @@ class _EditorPageState extends State<EditorPage>
                 _compareDragRatio = ratio;
               });
             },
-            exposure: _currentToolLabel == 'Masking'
-                ? (_maskingValues['Exposure'] ?? 0.0)
-                : (_lightValues['Exposure'] ?? 0.0),
-            contrast: _currentToolLabel == 'Masking'
-                ? (_maskingValues['Contrast'] ?? 0.0)
-                : (_lightValues['Contrast'] ?? 0.0),
-            highlights: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Highlights'] ?? 0.0),
-            shadows: _currentToolLabel == 'Masking'
-                ? (_maskingValues['Shadows'] ?? 0.0)
-                : (_lightValues['Shadows'] ?? 0.0),
-            whites: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Whites'] ?? 0.0),
-            blacks: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Blacks'] ?? 0.0),
+            exposure: _lightValues['Exposure'] ?? 0.0,
+            contrast: _lightValues['Contrast'] ?? 0.0,
+            highlights: _lightValues['Highlights'] ?? 0.0,
+            shadows: _lightValues['Shadows'] ?? 0.0,
+            whites: _lightValues['Whites'] ?? 0.0,
+            blacks: _lightValues['Blacks'] ?? 0.0,
             temperature: _colorValues['Temperature'] ?? 0.0,
             tint: _colorValues['Tint'] ?? 0.0,
             vibrance: _colorValues['Vibrance'] ?? 0.0,
-            saturation: _currentToolLabel == 'Masking'
-                ? (_maskingValues['Saturation'] ?? 0.0)
-                : (_colorValues['Saturation'] ?? 0.0),
+            saturation: _colorValues['Saturation'] ?? 0.0,
             hslAdjustments: _hslAdjustments,
             textureAdjust: _effectsValues['Texture'] ?? 0.0,
             clarity: _effectsValues['Clarity'] ?? 0.0,
             dehaze: _effectsValues['Dehaze'] ?? 0.0,
             vignette: _effectsValues['Vignette'] ?? 0.0,
             grain: _effectsValues['Grain'] ?? 0.0,
-            sharpeningAmount: _detailValues['Sharpening'] ?? 40.0,
-            sharpeningRadius: _detailValues['Radius'] ?? 1.0,
-            sharpeningDetail: _detailValues['Detail'] ?? 25.0,
+            sharpeningAmount: _detailValues['Sharpening'] ?? 0.0,
+            sharpeningRadius: _detailValues['Radius'] ?? 0.0,
+            sharpeningDetail: _detailValues['Detail'] ?? 0.0,
             sharpeningMasking: _detailValues['Masking'] ?? 0.0,
             luminanceNR: _detailValues['Luminance NR'] ?? 0.0,
-            colorNR: _detailValues['Color NR'] ?? 25.0,
+            colorNR: _detailValues['Color NR'] ?? 0.0,
             removeChromaticAberration: _removeChromaticAberration,
             enableLensCorrection: _enableLensCorrection,
             shadowsColor: _hueSatToRgbVec3(_shadowsHue, _shadowsSat),
@@ -1032,41 +1316,42 @@ class _EditorPageState extends State<EditorPage>
             custom3dLutImage: _custom3dLutImage,
             lutSize: state.session?.currentParameters.lutSize ?? 0.0,
             lutIntensity: state.session?.currentParameters.lutIntensity ?? 1.0,
+            maskImage: _customMaskTexture,
+            hasMask: realActiveMask != null && realActiveMask.isVisible,
+            maskExposure: realActiveMask?.exposure ?? 0.0,
+            maskContrast: realActiveMask?.contrast ?? 0.0,
+            maskShadows: realActiveMask?.shadows ?? 0.0,
+            maskSaturation: realActiveMask?.saturation ?? 0.0,
+            maskTemperature: realActiveMask?.temperature ?? 0.0,
+            maskTint: realActiveMask?.tint ?? 0.0,
+            showMaskOverlay: _showMaskOverlay,
           )
         : ImageCanvas(
             image: imageToRender,
             lutImage: _lutImage!,
             shader: _shader!,
-            exposure: _currentToolLabel == 'Masking'
-                ? (_maskingValues['Exposure'] ?? 0.0)
-                : (_lightValues['Exposure'] ?? 0.0),
-            contrast: _currentToolLabel == 'Masking'
-                ? (_maskingValues['Contrast'] ?? 0.0)
-                : (_lightValues['Contrast'] ?? 0.0),
-            highlights: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Highlights'] ?? 0.0),
-            shadows: _currentToolLabel == 'Masking'
-                ? (_maskingValues['Shadows'] ?? 0.0)
-                : (_lightValues['Shadows'] ?? 0.0),
-            whites: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Whites'] ?? 0.0),
-            blacks: _currentToolLabel == 'Masking' ? 0.0 : (_lightValues['Blacks'] ?? 0.0),
+            exposure: _lightValues['Exposure'] ?? 0.0,
+            contrast: _lightValues['Contrast'] ?? 0.0,
+            highlights: _lightValues['Highlights'] ?? 0.0,
+            shadows: _lightValues['Shadows'] ?? 0.0,
+            whites: _lightValues['Whites'] ?? 0.0,
+            blacks: _lightValues['Blacks'] ?? 0.0,
             temperature: _colorValues['Temperature'] ?? 0.0,
             tint: _colorValues['Tint'] ?? 0.0,
             vibrance: _colorValues['Vibrance'] ?? 0.0,
-            saturation: _currentToolLabel == 'Masking'
-                ? (_maskingValues['Saturation'] ?? 0.0)
-                : (_colorValues['Saturation'] ?? 0.0),
+            saturation: _colorValues['Saturation'] ?? 0.0,
             hslAdjustments: _hslAdjustments,
             textureAdjust: _effectsValues['Texture'] ?? 0.0,
             clarity: _effectsValues['Clarity'] ?? 0.0,
             dehaze: _effectsValues['Dehaze'] ?? 0.0,
             vignette: _effectsValues['Vignette'] ?? 0.0,
             grain: _effectsValues['Grain'] ?? 0.0,
-            sharpeningAmount: _detailValues['Sharpening'] ?? 40.0,
-            sharpeningRadius: _detailValues['Radius'] ?? 1.0,
-            sharpeningDetail: _detailValues['Detail'] ?? 25.0,
+            sharpeningAmount: _detailValues['Sharpening'] ?? 0.0,
+            sharpeningRadius: _detailValues['Radius'] ?? 0.0,
+            sharpeningDetail: _detailValues['Detail'] ?? 0.0,
             sharpeningMasking: _detailValues['Masking'] ?? 0.0,
             luminanceNR: _detailValues['Luminance NR'] ?? 0.0,
-            colorNR: _detailValues['Color NR'] ?? 25.0,
+            colorNR: _detailValues['Color NR'] ?? 0.0,
             removeChromaticAberration: _removeChromaticAberration,
             enableLensCorrection: _enableLensCorrection,
             shadowsColor: _hueSatToRgbVec3(_shadowsHue, _shadowsSat),
@@ -1077,16 +1362,27 @@ class _EditorPageState extends State<EditorPage>
             custom3dLutImage: _custom3dLutImage,
             lutSize: state.session?.currentParameters.lutSize ?? 0.0,
             lutIntensity: state.session?.currentParameters.lutIntensity ?? 1.0,
+            maskImage: _customMaskTexture,
+            hasMask: realActiveMask != null && realActiveMask.isVisible,
+            maskExposure: realActiveMask?.exposure ?? 0.0,
+            maskContrast: realActiveMask?.contrast ?? 0.0,
+            maskShadows: realActiveMask?.shadows ?? 0.0,
+            maskSaturation: realActiveMask?.saturation ?? 0.0,
+            maskTemperature: realActiveMask?.temperature ?? 0.0,
+            maskTint: realActiveMask?.tint ?? 0.0,
+            showMaskOverlay: _showMaskOverlay,
+            activeMask: realActiveMask,
+            currentBrushPoint: _currentBrushPoint,
+            currentBrushRadius: _currentBrushRadius,
           );
 
-    // Apply 3D Perspective, Flip, and Rotation
     final double tiltX = _perspectiveVertical * 0.005;
     final double tiltY = _perspectiveHorizontal * 0.005;
 
     Widget transformedCanvas = Transform(
       alignment: Alignment.center,
       transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.001) // perspective depth
+        ..setEntry(3, 2, 0.001)
         ..rotateX(tiltX)
         ..rotateY(tiltY)
         ..rotateZ(_rotation * 3.1415926535 / 180.0)
@@ -1094,8 +1390,17 @@ class _EditorPageState extends State<EditorPage>
       child: canvasWidget,
     );
 
+    Widget croppedCanvas = ClipPath(
+      clipper: CropClipper(
+        cropLeft: _cropLeft,
+        cropTop: _cropTop,
+        cropRight: _cropRight,
+        cropBottom: _cropBottom,
+      ),
+      child: transformedCanvas,
+    );
+
     if (_currentToolLabel == 'Geometry') {
-      // In geometry editing mode, show the full transformed image with CropOverlay on top
       return Stack(
         children: [
           Positioned.fill(child: transformedCanvas),
@@ -1122,16 +1427,37 @@ class _EditorPageState extends State<EditorPage>
         ],
       );
     } else {
-      // In normal mode, clip the image preview to show only the cropped portion
-      return ClipPath(
-        clipper: CropClipper(
-          cropLeft: _cropLeft,
-          cropTop: _cropTop,
-          cropRight: _cropRight,
-          cropBottom: _cropBottom,
-        ),
-        child: transformedCanvas,
-      );
+      if (_currentToolLabel == 'Masking') {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final imageAspect = imageToRender.width / imageToRender.height;
+            final parentAspect = constraints.maxWidth / constraints.maxHeight;
+
+            double canvasWidth;
+            double canvasHeight;
+            if (imageAspect > parentAspect) {
+              canvasWidth = constraints.maxWidth;
+              canvasHeight = canvasWidth / imageAspect;
+            } else {
+              canvasHeight = constraints.maxHeight;
+              canvasWidth = canvasHeight * imageAspect;
+            }
+            final Size canvasSize = Size(canvasWidth, canvasHeight);
+            final leftOffset = (constraints.maxWidth - canvasWidth) / 2;
+            final topOffset = (constraints.maxHeight - canvasHeight) / 2;
+            final Offset leftTopOffset = Offset(leftOffset, topOffset);
+
+            return GestureDetector(
+              onPanStart: (details) => _handleMaskPanStart(details, canvasSize, leftTopOffset),
+              onPanUpdate: (details) => _handleMaskPanUpdate(details, canvasSize, leftTopOffset),
+              onPanEnd: (details) => _handleMaskPanEnd(details),
+              behavior: HitTestBehavior.opaque,
+              child: croppedCanvas,
+            );
+          },
+        );
+      }
+      return croppedCanvas;
     }
   }
 
@@ -1535,6 +1861,40 @@ class _EditorPageState extends State<EditorPage>
                   lutSize: lutSize,
                   lutIntensity: lutIntensity,
                 ));
+          },
+        );
+
+      case 'Masking':
+        final activeParams = _tempParameters ?? params;
+        return MaskingPanel(
+          parameters: activeParams,
+          showOverlay: _showMaskOverlay,
+          onToggleOverlay: (val) {
+            setState(() {
+              _showMaskOverlay = val;
+            });
+          },
+          onChanged: (updated) {
+            setState(() {
+              _tempParameters = updated;
+            });
+            final activeId = updated.activeMaskId;
+            final activeMask = activeId != null
+                ? updated.masks.firstWhere(
+                    (m) => m.id == activeId,
+                    orElse: () => const MaskModel(id: '', name: '', type: MaskType.brush),
+                  )
+                : null;
+            if (activeMask != null && activeMask.id.isNotEmpty) {
+              _regenerateMaskTexture(activeMask);
+            } else {
+              setState(() {
+                _customMaskTexture = null;
+              });
+            }
+          },
+          onChangeEnd: (updated) {
+            context.read<EditorBloc>().add(UpdateMasks(updated));
           },
         );
 

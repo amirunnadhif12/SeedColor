@@ -365,11 +365,11 @@ class PresetRepositoryImpl implements PresetRepository {
       vignette: (map['vignette'] as num?)?.toDouble() ?? 0.0,
       grain: (map['grain'] as num?)?.toDouble() ?? 0.0,
       sharpeningAmount: (map['sharpeningAmount'] as num?)?.toDouble() ?? 0.0,
-      sharpeningRadius: (map['sharpeningRadius'] as num?)?.toDouble() ?? 1.0,
-      sharpeningDetail: (map['sharpeningDetail'] as num?)?.toDouble() ?? 25.0,
+      sharpeningRadius: (map['sharpeningRadius'] as num?)?.toDouble() ?? 0.0,
+      sharpeningDetail: (map['sharpeningDetail'] as num?)?.toDouble() ?? 0.0,
       sharpeningMasking: (map['sharpeningMasking'] as num?)?.toDouble() ?? 0.0,
       luminanceNR: (map['luminanceNR'] as num?)?.toDouble() ?? 0.0,
-      colorNR: (map['colorNR'] as num?)?.toDouble() ?? 25.0,
+      colorNR: (map['colorNR'] as num?)?.toDouble() ?? 0.0,
       removeChromaticAberration: map['removeChromaticAberration'] as bool? ?? false,
       enableLensCorrection: map['enableLensCorrection'] as bool? ?? false,
       cropLeft: (map['cropLeft'] as num?)?.toDouble() ?? 0.0,
@@ -395,6 +395,8 @@ class PresetRepositoryImpl implements PresetRepository {
       lutPath: map['lutPath'] as String?,
       lutIntensity: (map['lutIntensity'] as num?)?.toDouble() ?? 1.0,
       lutSize: (map['lutSize'] as num?)?.toDouble() ?? 0.0,
+      masks: const [],
+      activeMaskId: null,
     );
   }
 }

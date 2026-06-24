@@ -44,6 +44,7 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
     on<UpdateOptics>(_onUpdateOptics);
     on<UpdateGeometry>(_onUpdateGeometry);
     on<UpdateLut>(_onUpdateLut);
+    on<UpdateMasks>(_onUpdateMasks);
     on<ResetAll>(_onResetAll);
     on<Export>(_onExport);
     on<ApplyPreset>(_onApplyPreset);
@@ -243,6 +244,28 @@ class EditorBloc extends ReplayBloc<EditorEvent, EditorState> {
 
     final updatedSession = session.copyWith(currentParameters: updatedParameters);
     _addHistoryState(emit, updatedSession, event.lutPath == null ? 'Hapus 3D LUT' : 'Terapkan 3D LUT');
+  }
+
+  void _onUpdateMasks(UpdateMasks event, Emitter<EditorState> emit) {
+    final session = state.session;
+    if (session == null) return;
+
+    final oldParams = session.currentParameters;
+    final result = applyAdjustments(session, event.parameters);
+    result.fold(
+      (failure) => emit(state.copyWith(failure: failure)),
+      (updatedSession) {
+        String label = 'Penyesuaian Masker';
+        if (oldParams.masks.length < updatedSession.currentParameters.masks.length) {
+          label = 'Tambah Masker';
+        } else if (oldParams.masks.length > updatedSession.currentParameters.masks.length) {
+          label = 'Hapus Masker';
+        } else {
+          label = 'Edit Masker';
+        }
+        _addHistoryState(emit, updatedSession, label);
+      },
+    );
   }
 
   void _onResetAll(ResetAll event, Emitter<EditorState> emit) {

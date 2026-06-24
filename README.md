@@ -860,12 +860,12 @@ flutter install                  # Install ke device
 
 > Target: Masking tools (brush, gradient, radial) + AI segmentation masks.
 
-- [ ] **Step 24:** Brush Mask — Lukis area seleksi dengan jari
-- [ ] **Step 25:** Linear Gradient Mask — Geser dari atas/bawah
-- [ ] **Step 26:** Radial Gradient Mask — Lingkaran/elips
-- [ ] **Step 27:** Masked Adjustments — Apply any adjustment hanya ke area mask
-- [ ] **Step 28:** AI Subject Mask — TFLite model untuk deteksi subjek
-- [ ] **Step 29:** AI Sky Mask — Deteksi langit otomatis
+- [x] **Step 24:** Brush Mask — Lukis area seleksi dengan jari
+- [x] **Step 25:** Linear Gradient Mask — Geser dari atas/bawah
+- [x] **Step 26:** Radial Gradient Mask — Lingkaran/elips
+- [x] **Step 27:** Masked Adjustments — Apply any adjustment hanya ke area mask
+- [x] **Step 28:** AI Subject Mask — TFLite model untuk deteksi subjek
+- [x] **Step 29:** AI Sky Mask — Deteksi langit otomatis
 - [ ] **Step 30:** AI People Mask — Deteksi wajah, rambut, kulit, mata
 - [ ] **Step 31:** Color Range Mask — Seleksi berdasarkan warna
 - [ ] **Step 32:** Luminance Range Mask — Seleksi berdasarkan kecerahan

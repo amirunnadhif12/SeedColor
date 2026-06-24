@@ -62,6 +62,17 @@ class CompareCanvas extends StatefulWidget {
   final double lutSize;
   final double lutIntensity;
 
+  // Masking Support
+  final ui.Image? maskImage;
+  final bool hasMask;
+  final double maskExposure;
+  final double maskContrast;
+  final double maskShadows;
+  final double maskSaturation;
+  final double maskTemperature;
+  final double maskTint;
+  final bool showMaskOverlay;
+
   const CompareCanvas({
     super.key,
     required this.image,
@@ -102,6 +113,15 @@ class CompareCanvas extends StatefulWidget {
     this.custom3dLutImage,
     this.lutSize = 0.0,
     this.lutIntensity = 1.0,
+    this.maskImage,
+    this.hasMask = false,
+    this.maskExposure = 0.0,
+    this.maskContrast = 0.0,
+    this.maskShadows = 0.0,
+    this.maskSaturation = 0.0,
+    this.maskTemperature = 0.0,
+    this.maskTint = 0.0,
+    this.showMaskOverlay = false,
   });
 
   @override
@@ -202,6 +222,15 @@ class _CompareCanvasState extends State<CompareCanvas> {
                             custom3dLutImage: widget.custom3dLutImage,
                             lutSize: widget.lutSize,
                             lutIntensity: widget.lutIntensity,
+                            maskImage: widget.maskImage,
+                            hasMask: widget.hasMask,
+                            maskExposure: widget.maskExposure,
+                            maskContrast: widget.maskContrast,
+                            maskShadows: widget.maskShadows,
+                            maskSaturation: widget.maskSaturation,
+                            maskTemperature: widget.maskTemperature,
+                            maskTint: widget.maskTint,
+                            showMaskOverlay: widget.showMaskOverlay,
                           ),
                         ),
                       ),
@@ -231,12 +260,12 @@ class _CompareCanvasState extends State<CompareCanvas> {
                               dehaze: 0.0,
                               vignette: 0.0,
                               grain: 0.0,
-                              sharpeningAmount: 40.0,
-                              sharpeningRadius: 1.0,
-                              sharpeningDetail: 25.0,
+                              sharpeningAmount: 0.0,
+                              sharpeningRadius: 0.0,
+                              sharpeningDetail: 0.0,
                               sharpeningMasking: 0.0,
                               luminanceNR: 0.0,
-                              colorNR: 25.0,
+                              colorNR: 0.0,
                               removeChromaticAberration: false,
                               enableLensCorrection: false,
                               shadowsColor: const [0.0, 0.0, 0.0],
@@ -247,6 +276,15 @@ class _CompareCanvasState extends State<CompareCanvas> {
                               custom3dLutImage: null,
                               lutSize: 0.0,
                               lutIntensity: 1.0,
+                              maskImage: null,
+                              hasMask: false,
+                              maskExposure: 0.0,
+                              maskContrast: 0.0,
+                              maskShadows: 0.0,
+                              maskSaturation: 0.0,
+                              maskTemperature: 0.0,
+                              maskTint: 0.0,
+                              showMaskOverlay: false,
                             ),
                           ),
                         ),

@@ -45,7 +45,7 @@ class DetailPanel extends StatelessWidget {
                 SeedSlider(
                   label: 'Radius',
                   value: parameters.sharpeningRadius,
-                  min: 0.5,
+                  min: 0.0,
                   max: 3.0,
                   onChanged: (val) => onChanged('Radius', val),
                   onChangeEnd: (val) => onChangeEnd('Radius', val),

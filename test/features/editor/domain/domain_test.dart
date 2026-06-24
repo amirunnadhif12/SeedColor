@@ -4,6 +4,7 @@ import 'package:seed_color/core/errors/either.dart';
 import 'package:seed_color/core/errors/failures.dart';
 import 'package:seed_color/features/editor/domain/entities/curve_data.dart';
 import 'package:seed_color/features/editor/domain/entities/edit_parameters.dart';
+import 'package:seed_color/features/editor/domain/entities/mask_model.dart';
 import 'package:seed_color/features/editor/domain/entities/edit_session.dart';
 import 'package:seed_color/features/editor/domain/entities/hsl_adjustments.dart';
 import 'package:seed_color/features/editor/domain/repositories/editor_repository.dart';
@@ -155,6 +156,42 @@ void main() {
       expect(params3.flipHorizontal, isTrue);
       expect(params3.aspectRatio, equals('1:1'));
       expect(params3.contrast, equals(0.0));
+
+      final mask = MaskModel(
+        id: 'mask_1',
+        name: 'Brush Mask 1',
+        type: MaskType.brush,
+      );
+      final paramsWithMask = params1.copyWith(
+        masks: [mask],
+        activeMaskId: 'mask_1',
+      );
+      expect(paramsWithMask.masks.length, equals(1));
+      expect(paramsWithMask.activeMaskId, equals('mask_1'));
+      expect(paramsWithMask.masks[0].id, equals('mask_1'));
+    });
+  });
+
+  group('MaskModel', () {
+    test('should support value equality and copyWith', () {
+      const mask1 = MaskModel(
+        id: 'mask_1',
+        name: 'Brush Mask 1',
+        type: MaskType.brush,
+        exposure: 1.0,
+      );
+      const mask2 = MaskModel(
+        id: 'mask_1',
+        name: 'Brush Mask 1',
+        type: MaskType.brush,
+        exposure: 1.0,
+      );
+      expect(mask1, equals(mask2));
+
+      final mask3 = mask1.copyWith(name: 'Updated Name', exposure: -0.5);
+      expect(mask3.name, equals('Updated Name'));
+      expect(mask3.exposure, equals(-0.5));
+      expect(mask3.type, equals(MaskType.brush));
     });
   });
 

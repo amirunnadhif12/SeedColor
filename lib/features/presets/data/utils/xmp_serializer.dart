@@ -81,11 +81,11 @@ class XmpSerializer {
     final vignette = getDouble(r'crs:VignetteAmount="([^"]+)"', 0.0);
     final grain = getDouble(r'crs:GrainAmount="([^"]+)"', 0.0);
     final sharpness = getDouble(r'crs:Sharpness="([^"]+)"', 0.0);
-    final sharpenRadius = getDouble(r'crs:SharpenRadius="([^"]+)"', 1.0);
-    final sharpenDetail = getDouble(r'crs:SharpenDetail="([^"]+)"', 25.0);
+    final sharpenRadius = getDouble(r'crs:SharpenRadius="([^"]+)"', 0.0);
+    final sharpenDetail = getDouble(r'crs:SharpenDetail="([^"]+)"', 0.0);
     final sharpenMasking = getDouble(r'crs:SharpenEdgeMasking="([^"]+)"', 0.0);
     final luminanceNR = getDouble(r'crs:LuminanceSmoothing="([^"]+)"', 0.0);
-    final colorNR = getDouble(r'crs:ColorNoiseReduction="([^"]+)"', 25.0);
+    final colorNR = getDouble(r'crs:ColorNoiseReduction="([^"]+)"', 0.0);
     final chromaticAberration = getBool(r'crs:ChromaticAberration="([^"]+)"', false);
     final lensCorrection = getBool(r'crs:LensProfileEnable="([^"]+)"', false);
 

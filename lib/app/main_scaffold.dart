@@ -31,10 +31,12 @@ class MainScaffold extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.backgroundDark,
         body: navigationShell,
-        bottomNavigationBar: _BottomNavBar(
-          currentIndex: navigationShell.currentIndex,
-          onTap: (index) => _onTap(index),
-        ),
+        bottomNavigationBar: navigationShell.currentIndex == 2
+            ? null
+            : _BottomNavBar(
+                currentIndex: navigationShell.currentIndex,
+                onTap: (index) => _onTap(index),
+              ),
       ),
     );
   }

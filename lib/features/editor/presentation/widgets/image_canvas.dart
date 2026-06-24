@@ -2,6 +2,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../domain/entities/hsl_adjustments.dart';
+import '../../domain/entities/mask_model.dart';
+import 'mask_overlay_painter.dart';
 
 /// 🌱 SeedColor — Image Canvas Widget
 ///
@@ -56,6 +58,20 @@ class ImageCanvas extends StatelessWidget {
   final double lutSize;
   final double lutIntensity;
 
+  // Masking Support
+  final ui.Image? maskImage;
+  final bool hasMask;
+  final double maskExposure;
+  final double maskContrast;
+  final double maskShadows;
+  final double maskSaturation;
+  final double maskTemperature;
+  final double maskTint;
+  final bool showMaskOverlay;
+  final MaskModel? activeMask;
+  final Offset? currentBrushPoint;
+  final double? currentBrushRadius;
+
   const ImageCanvas({
     super.key,
     required this.image,
@@ -93,6 +109,18 @@ class ImageCanvas extends StatelessWidget {
     this.custom3dLutImage,
     this.lutSize = 0.0,
     this.lutIntensity = 1.0,
+    this.maskImage,
+    this.hasMask = false,
+    this.maskExposure = 0.0,
+    this.maskContrast = 0.0,
+    this.maskShadows = 0.0,
+    this.maskSaturation = 0.0,
+    this.maskTemperature = 0.0,
+    this.maskTint = 0.0,
+    this.showMaskOverlay = false,
+    this.activeMask,
+    this.currentBrushPoint,
+    this.currentBrushRadius,
   });
 
   @override
@@ -111,44 +139,68 @@ class ImageCanvas extends StatelessWidget {
           child: Center(
             child: AspectRatio(
               aspectRatio: image.width / image.height,
-              child: CustomPaint(
-                painter: ShaderPainter(
-                  shader: shader,
-                  image: image,
-                  lutImage: lutImage,
-                  exposure: exposure,
-                  contrast: contrast,
-                  highlights: highlights,
-                  shadows: shadows,
-                  whites: whites,
-                  blacks: blacks,
-                  temperature: temperature,
-                  tint: tint,
-                  vibrance: vibrance,
-                  saturation: saturation,
-                  hslAdjustments: hslAdjustments,
-                  textureAdjust: textureAdjust,
-                  clarity: clarity,
-                  dehaze: dehaze,
-                  vignette: vignette,
-                  grain: grain,
-                  sharpeningAmount: sharpeningAmount,
-                  sharpeningRadius: sharpeningRadius,
-                  sharpeningDetail: sharpeningDetail,
-                  sharpeningMasking: sharpeningMasking,
-                  luminanceNR: luminanceNR,
-                  colorNR: colorNR,
-                  removeChromaticAberration: removeChromaticAberration,
-                  enableLensCorrection: enableLensCorrection,
-                  shadowsColor: shadowsColor,
-                  midtonesColor: midtonesColor,
-                  highlightsColor: highlightsColor,
-                  cgBlending: cgBlending,
-                  cgBalance: cgBalance,
-                  custom3dLutImage: custom3dLutImage,
-                  lutSize: lutSize,
-                  lutIntensity: lutIntensity,
-                ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CustomPaint(
+                    painter: ShaderPainter(
+                      shader: shader,
+                      image: image,
+                      lutImage: lutImage,
+                      exposure: exposure,
+                      contrast: contrast,
+                      highlights: highlights,
+                      shadows: shadows,
+                      whites: whites,
+                      blacks: blacks,
+                      temperature: temperature,
+                      tint: tint,
+                      vibrance: vibrance,
+                      saturation: saturation,
+                      hslAdjustments: hslAdjustments,
+                      textureAdjust: textureAdjust,
+                      clarity: clarity,
+                      dehaze: dehaze,
+                      vignette: vignette,
+                      grain: grain,
+                      sharpeningAmount: sharpeningAmount,
+                      sharpeningRadius: sharpeningRadius,
+                      sharpeningDetail: sharpeningDetail,
+                      sharpeningMasking: sharpeningMasking,
+                      luminanceNR: luminanceNR,
+                      colorNR: colorNR,
+                      removeChromaticAberration: removeChromaticAberration,
+                      enableLensCorrection: enableLensCorrection,
+                      shadowsColor: shadowsColor,
+                      midtonesColor: midtonesColor,
+                      highlightsColor: highlightsColor,
+                      cgBlending: cgBlending,
+                      cgBalance: cgBalance,
+                      custom3dLutImage: custom3dLutImage,
+                      lutSize: lutSize,
+                      lutIntensity: lutIntensity,
+                      maskImage: maskImage,
+                      hasMask: hasMask,
+                      maskExposure: maskExposure,
+                      maskContrast: maskContrast,
+                      maskShadows: maskShadows,
+                      maskSaturation: maskSaturation,
+                      maskTemperature: maskTemperature,
+                      maskTint: maskTint,
+                      showMaskOverlay: showMaskOverlay,
+                    ),
+                  ),
+                  if (activeMask != null)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: MaskOverlayPainter(
+                          activeMask: activeMask,
+                          currentBrushPoint: currentBrushPoint,
+                          currentBrushRadius: currentBrushRadius,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -207,6 +259,17 @@ class ShaderPainter extends CustomPainter {
   final double lutSize;
   final double lutIntensity;
 
+  // Masking Support
+  final ui.Image? maskImage;
+  final bool hasMask;
+  final double maskExposure;
+  final double maskContrast;
+  final double maskShadows;
+  final double maskSaturation;
+  final double maskTemperature;
+  final double maskTint;
+  final bool showMaskOverlay;
+
   ShaderPainter({
     required this.shader,
     required this.image,
@@ -243,6 +306,15 @@ class ShaderPainter extends CustomPainter {
     this.custom3dLutImage,
     this.lutSize = 0.0,
     this.lutIntensity = 1.0,
+    required this.maskImage,
+    required this.hasMask,
+    required this.maskExposure,
+    required this.maskContrast,
+    required this.maskShadows,
+    required this.maskSaturation,
+    required this.maskTemperature,
+    required this.maskTint,
+    required this.showMaskOverlay,
   });
 
   @override
@@ -353,11 +425,20 @@ class ShaderPainter extends CustomPainter {
     s.setFloat(59, enableLensCorrection ? 1.0 : 0.0);
     s.setFloat(60, lutSize);
     s.setFloat(61, lutIntensity);
+    s.setFloat(62, hasMask ? 1.0 : 0.0);
+    s.setFloat(63, maskExposure);
+    s.setFloat(64, maskContrast);
+    s.setFloat(65, maskShadows);
+    s.setFloat(66, maskSaturation);
+    s.setFloat(67, maskTemperature);
+    s.setFloat(68, maskTint);
+    s.setFloat(69, showMaskOverlay ? 1.0 : 0.0);
 
     // Bind Samplers
     s.setImageSampler(0, image);
     s.setImageSampler(1, lutImage);
     s.setImageSampler(2, custom3dLutImage ?? lutImage);
+    s.setImageSampler(3, maskImage ?? lutImage);
 
     // Draw rect covering the size bounds with shader paint
     final paint = Paint()..shader = s;
@@ -398,6 +479,15 @@ class ShaderPainter extends CustomPainter {
         oldDelegate.lutIntensity != lutIntensity ||
         oldDelegate.custom3dLutImage != custom3dLutImage ||
         oldDelegate.image != image ||
-        oldDelegate.lutImage != lutImage;
+        oldDelegate.lutImage != lutImage ||
+        oldDelegate.maskImage != maskImage ||
+        oldDelegate.hasMask != hasMask ||
+        oldDelegate.maskExposure != maskExposure ||
+        oldDelegate.maskContrast != maskContrast ||
+        oldDelegate.maskShadows != maskShadows ||
+        oldDelegate.maskSaturation != maskSaturation ||
+        oldDelegate.maskTemperature != maskTemperature ||
+        oldDelegate.maskTint != maskTint ||
+        oldDelegate.showMaskOverlay != showMaskOverlay;
   }
 }

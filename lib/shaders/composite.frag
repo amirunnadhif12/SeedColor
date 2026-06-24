@@ -79,6 +79,17 @@ uniform float uEnableLensCorrection;
 uniform float u3dLutSize;       // e.g. 33.0, atau 0.0 jika dinonaktifkan
 uniform float u3dLutIntensity;  // 0.0 s.d. 1.0
 
+// --- Step 6: Masking Adjustments ---
+uniform float uHasMask;           // 1.0 if masking is active, 0.0 otherwise
+uniform float uMaskExposure;      // -5.0 to 5.0
+uniform float uMaskContrast;      // -100.0 to 100.0
+uniform float uMaskShadows;       // -100.0 to 100.0
+uniform float uMaskSaturation;     // -100.0 to 100.0
+uniform float uMaskTemperature;    // -100.0 to 100.0
+uniform float uMaskTint;          // -100.0 to 100.0
+uniform float uShowMaskOverlay;   // 1.0 to show red overlay, 0.0 otherwise
+uniform sampler2D uMaskTexture;   // Grayscale/alpha mask texture
+
 out vec4 fragColor;
 
 vec3 sample3dLut(sampler2D lutTex, vec3 color, float lutSize) {
@@ -525,6 +536,45 @@ void main() {
     }
     
     color.rgb = clamp(color.rgb, 0.0, 1.0);
+    
+    // ==========================================
+    // Penyesuaian Masker (Masking Adjustments)
+    // ==========================================
+    if (uHasMask > 0.0) {
+        float maskVal = texture(uMaskTexture, uv).r; // Mengambil nilai masker (merah/grayscale)
+        if (maskVal > 0.0) {
+            vec3 maskedColor = color.rgb;
+            if (uMaskExposure != 0.0) {
+                maskedColor *= pow(2.0, uMaskExposure);
+            }
+            if (uMaskContrast != 0.0) {
+                float factor = (100.0 + uMaskContrast) / 100.0;
+                factor = factor * factor;
+                maskedColor = (maskedColor - 0.5) * factor + 0.5;
+            }
+            if (uMaskShadows != 0.0) {
+                float luma = dot(maskedColor, vec3(0.299, 0.587, 0.114));
+                float shadowMask = smoothstep(0.4, 0.0, luma);
+                maskedColor += uMaskShadows * 0.005 * shadowMask * (1.0 - maskedColor);
+            }
+            if (uMaskTemperature != 0.0 || uMaskTint != 0.0) {
+                float warm = uMaskTemperature * 0.003;
+                float tint = uMaskTint * 0.003;
+                maskedColor.r += warm;
+                maskedColor.g += tint - warm * 0.5;
+                maskedColor.b -= warm;
+            }
+            if (uMaskSaturation != 0.0) {
+                float luma = dot(maskedColor, vec3(0.299, 0.587, 0.114));
+                maskedColor = mix(vec3(luma), maskedColor, (100.0 + uMaskSaturation) / 100.0);
+            }
+            color.rgb = mix(color.rgb, clamp(maskedColor, 0.0, 1.0), maskVal);
+            
+            if (uShowMaskOverlay > 0.0) {
+                color.rgb = mix(color.rgb, vec3(1.0, 0.0, 0.0), maskVal * 0.45);
+            }
+        }
+    }
     
     // ==========================================
     // 5. Color Grading (color_grading.frag)
